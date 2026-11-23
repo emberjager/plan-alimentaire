@@ -1,0 +1,2025 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1E6A4E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Mon plan">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>Plan alimentaire Stéphane</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: mobile-first carnet — onglets en barre basse, cartes de repas codées par couleur de catégorie (comme le PDF du coach) */
+:root{
+  --bg:#F2F4F1; --surface:#FFFFFF; --sunk:#E8ECE8; --ink:#17201C; --muted:#5B6862; --line:#D9E0DB;
+  --accent:#1E6A4E; --accent-ink:#FFFFFF; --guard:#C0262D; --guard-soft:#F8E3E3; --ok:#1E8A55; --ok-soft:#DDF1E6;
+  --c-b:#D99520; --c-c:#3F87C2; --c-l:#26965F; --c-d:#8463C4;
+  --g-n:#3B4FA8; --g-g:#7A1A1F; --g-a:#E3A82B;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Figtree", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#111614; --surface:#19201D; --sunk:#222B27; --ink:#E6ECE8; --muted:#97A59E; --line:#2B3531;
+  --accent:#5BC490; --accent-ink:#0D1A14; --guard:#F2636A; --guard-soft:#3A1C1E; --ok:#5BC490; --ok-soft:#183126;
+  --c-b:#EDB24A; --c-c:#6BAEE3; --c-l:#4CC387; --c-d:#A88CE6; --g-n:#6E7FE8; --g-g:#B83C44; --g-a:#E8B54A; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#111614; --surface:#19201D; --sunk:#222B27; --ink:#E6ECE8; --muted:#97A59E; --line:#2B3531;
+  --accent:#5BC490; --accent-ink:#0D1A14; --guard:#F2636A; --guard-soft:#3A1C1E; --ok:#5BC490; --ok-soft:#183126;
+  --c-b:#EDB24A; --c-c:#6BAEE3; --c-l:#4CC387; --c-d:#A88CE6; --g-n:#6E7FE8; --g-g:#B83C44; --g-a:#E8B54A; color-scheme:dark }
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:720px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 110px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:1.75rem;font-weight:800;letter-spacing:-.01em}
+h2{font-size:1.3rem;font-weight:800}
+h3{font-size:1.05rem;font-weight:600}
+p{margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.muted{color:var(--muted)}
+.small{font-size:.85rem}
+.eyebrow{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;font-weight:700;color:var(--muted)}
+.num{font-variant-numeric:tabular-nums}
+.stack{display:flex;flex-direction:column;gap:12px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.spread{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.sync{font-size:.75rem;color:var(--muted)}
+
+/* header */
+.top{display:flex;flex-direction:column;gap:6px;margin-bottom:18px}
+.chip{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:4px 10px;font-size:.8rem;font-weight:600;background:var(--sunk);color:var(--ink);border:1px solid transparent}
+.chip.guard{background:var(--guard-soft);color:var(--guard)}
+.chip.ok{background:var(--ok-soft);color:var(--ok)}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 12px;font-weight:600;font-size:.9rem}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:transparent}
+.btn.sm{padding:5px 10px;font-size:.8rem;border-radius:8px}
+.toggle-guard{border-radius:999px;padding:5px 12px;font-size:.8rem;font-weight:700;border:1.5px solid var(--line);background:var(--surface)}
+.toggle-guard[aria-pressed="true"]{background:var(--guard);border-color:var(--guard);color:#fff}
+.toggle-guard[data-gt="N"]{background:var(--g-n);border-color:var(--g-n)}
+.toggle-guard[data-gt="G"]{background:var(--g-g);border-color:var(--g-g)}
+.toggle-guard[data-gt="A"]{background:var(--g-a);border-color:var(--g-a);color:#1B1300}
+
+/* planning */
+.paint{display:flex;gap:6px;flex-wrap:wrap}
+.paint button{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:.82rem;font-weight:700;display:inline-flex;align-items:center;gap:6px}
+.paint button i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.paint button[aria-pressed="true"]{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.cal .dow{font-size:.7rem;text-align:center;color:var(--muted);font-weight:700;padding-bottom:2px}
+.cell{min-height:70px;border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:4px 3px;display:flex;flex-direction:column;align-items:stretch;gap:2px;font-size:.8rem;min-width:0}
+.cell .dn{text-align:center;font-weight:700}
+.cell.out{opacity:.4}
+.cell.today{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.gt{font-size:.62rem;font-weight:800;border-radius:5px;padding:1px 2px;color:#fff;text-align:center;white-space:nowrap;overflow:hidden}
+.gt-J{background:var(--guard)} .gt-N{background:var(--g-n)} .gt-G{background:var(--g-g)} .gt-A{background:var(--g-a);color:#1B1300}
+.mk{font-size:.58rem;font-weight:700;border-radius:4px;padding:0 2px;text-align:center;white-space:nowrap;overflow:hidden}
+.mk.cook{background:var(--ok-soft);color:var(--ok)}
+.mk.drive{background:color-mix(in srgb,var(--c-c) 18%,var(--surface));color:var(--c-c)}
+.agenda{display:flex;flex-direction:column}
+.agenda .ag{display:grid;grid-template-columns:92px 1fr;gap:10px;padding:10px 0;border-top:1px solid var(--line);font-size:.88rem}
+.agenda .ag:first-child{border-top:0}
+.agenda ul{margin:0;padding-left:16px}
+.remind{border-left:4px solid var(--c-c);background:color-mix(in srgb,var(--c-c) 8%,var(--surface));border-radius:0 var(--r) var(--r) 0;padding:10px 14px;display:flex;flex-direction:column;gap:6px;font-size:.9rem}
+.remind ul{margin:0;padding-left:18px}
+
+/* kcal bar */
+.kbar{display:flex;height:10px;border-radius:999px;overflow:hidden;gap:2px;background:var(--sunk)}
+.kbar span{display:block;height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.78rem;color:var(--muted)}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+
+/* meals */
+.meal{display:grid;grid-template-columns:4px 1fr auto;gap:0 12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px 12px 0;overflow:hidden}
+.meal .band{border-radius:0 4px 4px 0}
+.meal .body{min-width:0;display:flex;flex-direction:column;gap:3px}
+.meal .name{font-weight:700;font-size:1rem}
+.meal .ings{font-size:.85rem;color:var(--muted)}
+.meal .side{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.meal .tag{font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--sunk);white-space:nowrap}
+.cat-B{--c:var(--c-b)} .cat-C{--c:var(--c-c)} .cat-L{--c:var(--c-l)} .cat-D{--c:var(--c-d)}
+.band{background:var(--c)}
+.catlabel{color:var(--c);font-weight:700;font-size:.75rem;text-transform:uppercase;letter-spacing:.07em}
+.swap{border:1px solid var(--line);background:transparent;border-radius:8px;padding:4px 9px;font-size:.78rem;font-weight:600;color:var(--muted)}
+.swap:hover{color:var(--ink);border-color:var(--muted)}
+.note{font-size:.8rem;color:var(--muted);font-style:italic}
+
+/* habits */
+.habit{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+.habit:first-of-type{border-top:0}
+.switch{width:52px;height:30px;border-radius:999px;border:0;background:var(--sunk);position:relative;flex:none}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:var(--surface);box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .15s}
+.switch[aria-checked="true"]{background:var(--ok)}
+.switch[aria-checked="true"]::after{transform:translateX(22px)}
+.glasses{display:flex;gap:4px;flex-wrap:wrap}
+.glass{width:26px;height:32px;border-radius:4px 4px 8px 8px;border:1.5px solid var(--c-c);background:transparent;padding:0}
+.glass.on{background:var(--c-c)}
+.history{display:grid;grid-template-columns:repeat(14,1fr);gap:3px;margin-top:6px}
+.history div{display:flex;flex-direction:column;gap:2px;align-items:center;font-size:.62rem;color:var(--muted)}
+.history b{display:block;width:100%;height:6px;border-radius:2px;background:var(--sunk)}
+.history b.s.on{background:var(--c-d)} .history b.w.on{background:var(--c-c)} .history b.a.on{background:var(--ok)}
+
+/* week */
+.weeknav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+.weeknav .mid{text-align:center;min-width:0}
+.day{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.day.today{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.day.isguard{border-left:4px solid var(--guard)}
+.dayline{display:grid;grid-template-columns:86px 1fr;gap:8px;align-items:baseline;font-size:.88rem}
+.dayline button.link{border:0;background:none;padding:0;text-align:left;font-weight:600;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
+.dayline button.link:hover{text-decoration-color:var(--ink)}
+.dayline .k{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--c)}
+.session{border:1.5px dashed var(--accent);border-radius:var(--r);padding:12px 14px;background:color-mix(in srgb,var(--accent) 7%,var(--surface))}
+.session.warn{border-color:var(--guard);background:var(--guard-soft)}
+.session ul{margin:6px 0 0;padding-left:18px}
+.session li{margin:2px 0}
+
+/* shopping */
+.shopsum{display:flex;gap:10px;flex-wrap:wrap}
+.shopsum .card{flex:1 1 140px}
+.big{font-family:var(--f-display);font-size:1.6rem;font-weight:800}
+.aisle h3{margin:14px 0 6px;font-size:.95rem}
+.item{display:flex;gap:12px;align-items:flex-start;padding:9px 0;border-top:1px solid var(--line)}
+.item:first-child{border-top:0}
+.item input{width:20px;height:20px;margin-top:2px;accent-color:var(--accent);flex:none}
+.item label{flex:1;min-width:0;cursor:pointer}
+.item .q{font-weight:700}
+.item.done label{opacity:.45;text-decoration:line-through}
+.item .price{font-size:.8rem;color:var(--muted);white-space:nowrap}
+
+/* recipes */
+.rgroup{display:flex;flex-direction:column;gap:8px}
+details.recipe{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);border-left:4px solid var(--c)}
+details.recipe summary{list-style:none;padding:12px 14px;cursor:pointer;display:flex;justify-content:space-between;gap:10px;align-items:center}
+details.recipe summary::-webkit-details-marker{display:none}
+details.recipe .in{padding:0 14px 14px;display:flex;flex-direction:column;gap:8px;font-size:.9rem}
+details.recipe ul{margin:0;padding-left:18px}
+details.how{margin-top:4px}
+details.how summary{cursor:pointer;font-size:.82rem;font-weight:700;color:var(--accent);list-style:none}
+details.how summary::-webkit-details-marker{display:none}
+details.how summary::before{content:"▸ "}
+details.how[open] summary::before{content:"▾ "}
+details.how ol{margin:6px 0 2px;padding-left:18px;font-size:.85rem;display:flex;flex-direction:column;gap:3px}
+
+/* advice */
+.advice{display:flex;flex-direction:column;gap:12px}
+.advice .card{display:flex;flex-direction:column;gap:8px}
+.advice ul{margin:0;padding-left:18px}
+.advice li{margin:3px 0}
+.hand{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.hand div{background:var(--sunk);border-radius:10px;padding:10px 12px;font-size:.85rem}
+.hand b{display:block;font-size:.9rem}
+.macro{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.macro div{background:var(--sunk);border-radius:10px;padding:10px;text-align:center}
+.macro b{display:block;font-family:var(--f-display);font-size:1.15rem}
+.warnbox{border-left:4px solid var(--guard);padding:8px 12px;background:var(--guard-soft);border-radius:0 10px 10px 0;font-size:.88rem}
+
+/* session guidée */
+.progress{height:8px;border-radius:999px;background:var(--sunk);overflow:hidden}
+.progress span{display:block;height:100%;background:var(--ok);transition:width .2s}
+.phase{margin:20px 0 8px}
+.step{display:grid;grid-template-columns:34px 1fr;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px 12px 10px;margin-bottom:8px}
+.step.next{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.step.done{opacity:.55}
+.step.done .txt{text-decoration:line-through}
+.check{width:32px;height:32px;border-radius:50%;border:2px solid var(--line);background:var(--surface);display:grid;place-items:center;padding:0;font-weight:800;color:transparent}
+.check[aria-checked="true"]{background:var(--ok);border-color:var(--ok);color:#fff}
+.step .tags{font-size:.75rem;color:var(--muted)}
+.timerbar{position:fixed;left:0;right:0;bottom:calc(62px + env(safe-area-inset-bottom,0px));z-index:21;display:flex;gap:6px;justify-content:center;flex-wrap:wrap;padding:6px 16px;pointer-events:none}
+.timerbar[hidden]{display:none}
+.tm{pointer-events:auto;display:flex;align-items:center;gap:8px;background:var(--ink);color:var(--bg);border-radius:999px;padding:5px 5px 5px 14px;font-size:.85rem;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+.tm b{font-size:1rem}
+.tm button{border:0;background:color-mix(in srgb,var(--bg) 22%,transparent);color:inherit;border-radius:999px;min-width:32px;height:32px;font-weight:700;padding:0 8px}
+.tm.done{background:var(--guard);color:#fff;animation:pulse 1s infinite}
+@keyframes pulse{50%{transform:scale(1.05)}}
+
+/* placard et tickets */
+.srow{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;text-align:left;border:0;border-top:1px solid var(--line);background:none;padding:10px 0}
+.srow:first-of-type{border-top:0}
+.srow .qty{font-weight:700;white-space:nowrap;text-align:right}
+.lvl{font-size:.78rem;color:var(--muted)}
+.lvl.warn{color:var(--guard);font-weight:600}
+.lvl.ok{color:var(--ok)}
+.field{font:inherit;font-size:16px;padding:7px 9px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);width:100%;min-width:0}
+.tline{border-top:1px solid var(--line);padding:10px 0;display:grid;grid-template-columns:1fr 1fr auto;gap:6px;align-items:center}
+.tline .full{grid-column:1/-1}
+.tline .u{display:flex;align-items:center;gap:4px;font-size:.8rem;color:var(--muted)}
+.seg{display:inline-flex;background:var(--sunk);border-radius:10px;padding:3px;gap:2px}
+.seg button{border:0;background:none;padding:6px 14px;border-radius:8px;font-weight:600;font-size:.88rem;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.filebtn{position:relative;overflow:hidden;display:inline-flex;align-items:center}
+.filebtn input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
+details.tk{background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+details.tk summary{list-style:none;padding:12px 14px;cursor:pointer;display:flex;justify-content:space-between;gap:10px;align-items:center}
+details.tk summary::-webkit-details-marker{display:none}
+details.tk .in{padding:0 14px 14px;display:flex;flex-direction:column;gap:10px;font-size:.9rem}
+.tk table{width:100%;border-collapse:collapse;font-size:.85rem}
+.tk td{padding:5px 0;border-top:1px solid var(--line);vertical-align:top}
+.tk td:last-child{text-align:right;white-space:nowrap;padding-left:8px}
+.aitxt{white-space:pre-wrap;font-size:.88rem;background:var(--sunk);border-radius:10px;padding:10px 12px}
+
+/* tabs */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:max(4px,env(safe-area-inset-left,0px));padding-right:max(4px,env(safe-area-inset-right,0px))}
+nav.tabs .in{max-width:720px;margin:0 auto;display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+nav.tabs button{border:0;background:none;padding:10px 0 9px;font-size:.62rem;font-weight:600;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:3px}
+nav.tabs button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+nav.tabs button[aria-selected="true"]{color:var(--accent)}
+
+/* sheet */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:30;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--bg);width:100%;max-width:720px;max-height:85vh;overflow:auto;border-radius:18px 18px 0 0;padding:18px max(16px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:10px}
+.dgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:6px}
+.dbtn{border:1.5px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 6px;display:flex;flex-direction:column;align-items:center;gap:2px;font-weight:600;color:var(--ink);font-size:.85rem;font-family:inherit}
+.dbtn[aria-pressed="true"]{border-color:var(--ok);box-shadow:inset 0 0 0 1px var(--ok)}
+.dbtn[aria-pressed="true"]::after{content:"✓";color:var(--ok);font-size:.8rem}
+.dbtn:disabled{opacity:.55}
+.dbtn small{font-weight:500;color:var(--muted);font-size:.7rem;text-align:center}
+.picks{display:flex;flex-wrap:wrap;gap:6px}
+.opt{text-align:left;background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.opt.cur{border-color:var(--accent)}
+.opt .ings{font-size:.82rem;color:var(--muted)}
+.opt[aria-pressed="true"]{border-color:var(--ok);box-shadow:inset 0 0 0 1px var(--ok)}
+.meal.skipped .body,.meal.skipped .band{opacity:.5}
+.meal.skipped .name{text-decoration:line-through}
+.mini{border:1px solid var(--line);background:transparent;border-radius:8px;padding:1px 7px;font-size:.72rem;font-weight:600;color:var(--muted);margin-left:4px}
+.pkgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.pk{background:var(--surface);border:1.5px solid var(--line);border-top:4px solid var(--c);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.pk.on{border-color:var(--ok);border-top-color:var(--c);box-shadow:inset 0 0 0 1px var(--ok)}
+.pk b{font-size:.92rem;line-height:1.25}
+.pk .ings{font-size:.76rem;color:var(--muted)}
+.pk .meta{display:flex;flex-wrap:wrap;gap:4px;font-size:.72rem}
+.pk .meta span{background:var(--sunk);border-radius:999px;padding:1px 7px;font-weight:600}
+.stepper{display:flex;align-items:center;justify-content:space-between;margin-top:auto;padding-top:6px}
+.stepper button{width:38px;height:38px;border-radius:50%;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font-weight:700;font-size:1.15rem;line-height:1}
+.stepper button:disabled{opacity:.35}
+.stepper .n{font-weight:800;font-size:1.05rem;min-width:24px;text-align:center}
+.assign{font-size:.84rem;margin:8px 0 4px;padding-left:18px}
+.banner{background:color-mix(in srgb,var(--accent) 10%,var(--surface));border:1px solid color-mix(in srgb,var(--accent) 35%,var(--line));border-radius:var(--r);padding:12px 14px;font-size:.9rem;display:flex;flex-direction:column;gap:8px}
+input[type=date]{font:inherit;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap" id="app"></div>
+<nav class="tabs" aria-label="Sections"><div class="in" role="tablist" id="tabs"></div></nav>
+<div class="timerbar" id="timerBar" hidden aria-live="polite"></div>
+<div id="sheetRoot"></div>
+
+<script>
+/* ---------- Données : ingrédients (rayon, unité, achat, prix estimé) ---------- */
+const AISLES = {
+  fruits:"Fruits & légumes", viande:"Boucherie & volaille", poisson:"Poissonnerie", cremerie:"Crèmerie, œufs & frais",
+  pain:"Pain", salee:"Épicerie salée", sucree:"Petit-déj & épicerie sucrée", surgeles:"Surgelés"
+};
+// [nom, rayon, unité, achat, placard?]  achat = {s:taille, l:libellé, p:prix} ou {pw:poids pièce, w:[sing,plur], p:prix pièce}
+const ING = {
+  poulet:["Blanc de poulet","viande","g",[{s:500,l:"barquette 500 g",p:6.5},{s:1000,l:"barquette 1 kg",p:11.5}]],
+  boeuf:["Bœuf haché 5 % MG","viande","g",[{s:500,l:"barquette 500 g",p:7},{s:1000,l:"barquette 1 kg",p:12.9}]],
+  steak:["Steak de bœuf à griller","viande","g",{s:300,l:"lot de 2 (300 g)",p:7.5}],
+  dinde:["Escalopes de dinde","viande","g",{s:500,l:"barquette 500 g",p:6.5}],
+  porc:["Filet mignon de porc","viande","g",{s:450,l:"filet (~450 g)",p:7.5}],
+  jambon:["Jambon blanc","viande","g",{s:160,l:"4 tranches (160 g)",p:2.6}],
+  saumon:["Pavés de saumon (frais ou surgelés)","poisson","g",{s:500,l:"4 pavés (500 g)",p:10}],
+  saumonfume:["Saumon fumé","poisson","g",{s:120,l:"4 tranches (120 g)",p:4.5}],
+  oeuf:["Œufs","cremerie","pc",{s:12,l:"boîte de 12",p:3.6}],
+  lait:["Lait demi-écrémé","cremerie","ml",{s:1000,l:"brique 1 L",p:1.05}],
+  skyr:["Skyr nature","cremerie","g",{s:450,l:"pot 450 g",p:1.9}],
+  fromageblanc:["Fromage blanc 3 %","cremerie","g",{s:500,l:"pot 500 g",p:1.4}],
+  fromagefrais:["Fromage frais nature","cremerie","g",{s:150,l:"barquette 150 g",p:1.9}],
+  cottage:["Cottage cheese","cremerie","g",{s:200,l:"pot 200 g",p:1.8}],
+  yaourt:["Yaourts nature","cremerie","g",{s:500,l:"pack 4 × 125 g",p:1}],
+  parmesan:["Parmesan râpé","cremerie","g",{s:100,l:"sachet 100 g",p:2.6}],
+  emmental:["Emmental en tranches","cremerie","g",{s:200,l:"paquet 200 g",p:2.2}],
+  cheddar:["Cheddar en tranches","cremerie","g",{s:200,l:"paquet 200 g",p:2.3}],
+  beurre:["Beurre doux","cremerie","g",{s:250,l:"plaquette 250 g",p:2.6},1],
+  houmous:["Houmous","cremerie","g",{s:200,l:"pot 200 g",p:2}],
+  painc:["Pain complet tranché","pain","g",{s:500,l:"paquet 500 g",p:2.3}],
+  painburger:["Pains à burger","pain","g",{s:320,l:"paquet de 4",p:1.9}],
+  tortilla:["Tortillas de blé","pain","g",{s:370,l:"paquet de 6",p:1.9}],
+  riz:["Riz basmati","salee","g",{s:1000,l:"paquet 1 kg",p:2.6},1],
+  pates:["Pâtes complètes","salee","g",{s:500,l:"paquet 500 g",p:1.3}],
+  spaghetti:["Spaghetti","salee","g",{s:500,l:"paquet 500 g",p:1.1}],
+  semoule:["Semoule moyenne","salee","g",{s:1000,l:"paquet 1 kg",p:1.9},1],
+  quinoa:["Quinoa","salee","g",{s:500,l:"paquet 500 g",p:3.4}],
+  pchiche:["Pois chiches","salee","g",{s:265,l:"boîte (265 g égouttés)",p:1}],
+  hrouge:["Haricots rouges","salee","g",{s:250,l:"boîte (250 g égouttés)",p:1}],
+  mais:["Maïs doux","salee","g",{s:285,l:"boîte (285 g égouttés)",p:1.2}],
+  thon:["Thon au naturel","salee","g",{s:140,l:"boîte (140 g égouttés)",p:1.9}],
+  coulis:["Coulis de tomate","salee","g",{s:500,l:"brique 500 g",p:1}],
+  concassees:["Tomates concassées","salee","g",{s:400,l:"boîte 400 g",p:0.9}],
+  laitcoco:["Lait de coco","salee","ml",{s:400,l:"boîte 400 ml",p:1.6}],
+  pesto:["Pesto","salee","g",{s:190,l:"pot 190 g",p:2.3}],
+  crackers:["Crackers complets","salee","g",{s:200,l:"paquet 200 g",p:1.9}],
+  galettes:["Galettes de riz","salee","pc",{s:16,l:"paquet de 16",p:1.3}],
+  huile:["Huile d'olive","salee","ml",{s:1000,l:"bouteille 1 L",p:9},1],
+  avoine:["Flocons d'avoine","sucree","g",{s:1000,l:"paquet 1 kg",p:1.8},1],
+  granola:["Granola","sucree","g",{s:500,l:"paquet 500 g",p:3}],
+  bc:["Beurre de cacahuète","sucree","g",{s:350,l:"pot 350 g",p:3.2},1],
+  miel:["Miel","sucree","g",{s:500,l:"pot 500 g",p:5},1],
+  cacao:["Cacao non sucré","sucree","g",{s:250,l:"boîte 250 g",p:3.2},1],
+  choco:["Chocolat noir 70 %","sucree","g",{s:100,l:"tablette 100 g",p:1.4}],
+  amandes:["Amandes","sucree","g",{s:200,l:"sachet 200 g",p:3.2}],
+  noix:["Cerneaux de noix","sucree","g",{s:200,l:"sachet 200 g",p:3.6}],
+  ananas:["Ananas au jus","sucree","g",{s:340,l:"boîte (340 g égouttés)",p:1.8}],
+  banane:["Bananes","fruits","g",{pw:120,w:["banane","bananes"],p:0.25}],
+  pomme:["Pommes","fruits","g",{pw:150,w:["pomme","pommes"],p:0.35}],
+  orange:["Oranges","fruits","g",{pw:130,w:["orange","oranges"],p:0.35}],
+  kiwi:["Kiwis","fruits","g",{pw:80,w:["kiwi","kiwis"],p:0.35}],
+  avocat:["Avocats","fruits","g",{pw:140,w:["avocat","avocats"],p:1}],
+  brocoli:["Brocolis","fruits","g",{pw:400,w:["tête de brocoli","têtes de brocoli"],p:1.8}],
+  courgette:["Courgettes","fruits","g",{pw:250,w:["courgette","courgettes"],p:0.6}],
+  carotte:["Carottes","fruits","g",{s:1000,l:"sachet 1 kg",p:1.4}],
+  pdt:["Pommes de terre","fruits","g",{s:2500,l:"filet 2,5 kg",p:3.3}],
+  patate:["Patates douces","fruits","g",{pw:400,w:["patate douce","patates douces"],p:1.1}],
+  concombre:["Concombres","fruits","g",{pw:300,w:["concombre","concombres"],p:0.9}],
+  tomate:["Tomates","fruits","g",{pw:120,w:["tomate","tomates"],p:0.35}],
+  tomcerise:["Tomates cerises","fruits","g",{s:250,l:"barquette 250 g",p:2.1}],
+  salade:["Salade verte","fruits","g",{s:200,l:"sachet 200 g",p:1.6}],
+  hverts:["Haricots verts extra-fins","surgeles","g",{s:1000,l:"sachet 1 kg",p:2.4}],
+  fruitsrouges:["Fruits rouges","surgeles","g",{s:500,l:"sachet 500 g",p:3.2}],
+};
+const SHORT = {poulet:"Poulet",boeuf:"Bœuf haché 5 %",steak:"Steak de bœuf",dinde:"Escalope de dinde",porc:"Filet mignon de porc",jambon:"Jambon blanc",
+  saumon:"Saumon",saumonfume:"Saumon fumé",oeuf:"Œuf",lait:"Lait demi-écrémé",skyr:"Skyr",fromageblanc:"Fromage blanc 3 %",fromagefrais:"Fromage frais",
+  cottage:"Cottage cheese",yaourt:"Yaourt nature",parmesan:"Parmesan",emmental:"Emmental",cheddar:"Cheddar",beurre:"Beurre",houmous:"Houmous",
+  painc:"Pain complet",painburger:"Pain burger",tortilla:"Tortillas de blé",riz:"Riz basmati (cru)",pates:"Pâtes complètes (crues)",spaghetti:"Spaghetti (crus)",
+  semoule:"Semoule (crue)",quinoa:"Quinoa (cru)",pchiche:"Pois chiches cuits",hrouge:"Haricots rouges cuits",mais:"Maïs",thon:"Thon au naturel égoutté",
+  coulis:"Coulis de tomate",concassees:"Tomates concassées",laitcoco:"Lait de coco",pesto:"Pesto",crackers:"Crackers complets",galettes:"Galettes de riz",
+  huile:"Huile d'olive",avoine:"Flocons d'avoine",granola:"Granola",bc:"Beurre de cacahuète",miel:"Miel",cacao:"Cacao non sucré",choco:"Chocolat noir",
+  amandes:"Amandes",noix:"Noix",ananas:"Ananas",banane:"Banane",pomme:"Pomme",orange:"Orange",kiwi:"Kiwi",avocat:"Avocat",brocoli:"Brocolis",
+  courgette:"Courgette",carotte:"Carotte",pdt:"Pommes de terre",patate:"Patate douce",concombre:"Concombre",tomate:"Tomate",tomcerise:"Tomates cerises",
+  salade:"Salade verte",hverts:"Haricots verts",fruitsrouges:"Fruits rouges"};
+
+/* ---------- Les 35 recettes du plan (+ 7 collations), quantités du PDF ---------- */
+const CAT = {B:{n:"Petit-déjeuner",k:500},C:{n:"Collation",k:250},L:{n:"Déjeuner",k:700},D:{n:"Dîner",k:850}};
+const R = {
+ B1:{c:"B",n:"Porridge banane et beurre de cacahuète",i:{avoine:45,lait:150,skyr:150,banane:100,bc:8},h:"La veille : mélange les flocons et le lait dans un bocal, au frigo. Le matin : ajoute le skyr, la banane en rondelles et le beurre de cacahuète. Se transporte bien les jours de garde."},
+ B2:{c:"B",n:"Tartines œufs et avocat",i:{painc:90,oeuf:2,avocat:40,skyr:100},h:"Fais griller le pain, cuis les œufs (au plat, brouillés, ou durs préparés en session). Écrase l'avocat sur le pain. Le skyr se mange à côté."},
+ B3:{c:"B",n:"Bowl fromage blanc et granola",i:{fromageblanc:200,granola:65,fruitsrouges:100,miel:10},h:"Tout dans un bol. Sors les fruits rouges du congélateur la veille au soir."},
+ B4:{c:"B",n:"Pancakes protéinés",i:{avoine:50,oeuf:1,banane:100,skyr:150,miel:5},h:"Mixe les flocons, l'œuf et la banane. Cuis 3 ou 4 petits pancakes dans une poêle antiadhésive (2 min par face). Sers avec le skyr et le miel. Se prépare la veille."},
+ B5:{c:"B",n:"Sandwich jambon et fromage",i:{painc:100,jambon:60,emmental:20,beurre:5,orange:100},h:"Beurre le pain, ajoute jambon et emmental. L'orange se mange à côté. Parfait à emporter."},
+ B6:{c:"B",n:"Smoothie énergétique",i:{lait:250,banane:100,avoine:40,bc:10,skyr:100},h:"Tout au blender pendant 30 secondes. Se boit sur la route dans une gourde."},
+ B7:{c:"B",n:"Tartines saumon et fromage frais",i:{painc:90,saumonfume:60,fromagefrais:30,skyr:100,kiwi:80},h:"Tartine le fromage frais sur le pain, ajoute le saumon fumé. Skyr et kiwi à côté."},
+ C1:{c:"C",n:"Skyr, banane et amandes",i:{skyr:150,banane:100,amandes:15}},
+ C2:{c:"C",n:"Tartines beurre de cacahuète",i:{painc:60,bc:15,lait:100}},
+ C3:{c:"C",n:"Fromage blanc, noix et fruits rouges",i:{fromageblanc:200,noix:15,fruitsrouges:80}},
+ C4:{c:"C",n:"Smoothie banane et lait",i:{lait:250,banane:100,avoine:15},h:"Tout au blender."},
+ C5:{c:"C",n:"Œufs et pain complet",i:{oeuf:2,painc:35},h:"Œufs durs cuits en session (10 min dans l'eau bouillante), ils se gardent 4 jours au frigo dans leur coquille."},
+ C6:{c:"C",n:"Yaourt protéiné et granola",i:{skyr:150,granola:35,pomme:80}},
+ C7:{c:"C",n:"Mini-sandwich jambon",i:{painc:55,jambon:40,fromagefrais:15}},
+ C8:{c:"C",n:"Skyr, miel et amandes",i:{skyr:170,miel:15,amandes:15}},
+ C9:{c:"C",n:"Galettes de riz et beurre de cacahuète",i:{galettes:3,bc:20,banane:60},h:"Sans frigo : idéal pendant une garde."},
+ C10:{c:"C",n:"Cottage cheese et ananas",i:{cottage:150,ananas:120,noix:10}},
+ C11:{c:"C",n:"Boules énergétiques maison",i:{avoine:35,bc:15,miel:10,choco:10},h:"En session : mélange flocons, beurre de cacahuète, miel et chocolat haché. Forme 3 ou 4 boules, 30 min au frigo. Elles tiennent sans frigo pendant une garde."},
+ C12:{c:"C",n:"Houmous et crackers",i:{houmous:50,crackers:35,concombre:100}},
+ C13:{c:"C",n:"Smoothie cacao et banane",i:{lait:200,banane:80,skyr:100,cacao:5},h:"Tout au blender."},
+ C14:{c:"C",n:"Pomme, amandes et chocolat noir",i:{pomme:150,amandes:20,choco:10},h:"Sans frigo : idéal pendant une garde."},
+ L1:{c:"L",n:"Poulet, riz et brocolis",i:{poulet:150,riz:90,brocoli:150,huile:10},h:"Riz : 12 min dans l'eau bouillante. Poulet en dés à la poêle avec l'huile et tes épices (8-10 min). Brocolis : 6 min à l'eau ou à la vapeur, ils restent croquants au réchauffage."},
+ L2:{c:"L",n:"Pâtes à la bolognaise",i:{pates:90,boeuf:150,coulis:150,parmesan:10,huile:5},h:"Fais revenir le bœuf dans l'huile, ajoute le coulis, herbes et ail, 10 min à feu doux. Pâtes al dente (elles finissent de cuire au réchauffage). Parmesan au moment de manger."},
+ L3:{c:"L",n:"Saumon et pommes de terre",i:{saumon:150,pdt:250,hverts:150,huile:5},h:"Pommes de terre en quartiers au four à 200 °C, 35 min avec l'huile. Saumon au four 12-15 min (citron, aneth). Haricots verts 8 min à l'eau."},
+ L4:{c:"L",n:"Wraps poulet et avocat",i:{tortilla:100,poulet:130,avocat:40,yaourt:50,tomate:50,concombre:50},h:"En session : cuis le poulet en lamelles. Le jour même : garnis les tortillas avec le poulet, l'avocat coupé au dernier moment, le yaourt et les crudités.",f:"Poulet cuit en session, wrap monté le jour même."},
+ L5:{c:"L",n:"Dinde et couscous",i:{dinde:150,semoule:85,pchiche:50,courgette:100,carotte:50,huile:5},h:"Semoule : verse le même volume d'eau bouillante, couvre 5 min. Dinde en lanières à la poêle. Légumes en dés poêlés 10 min avec ras el hanout ou cumin. Ajoute les pois chiches."},
+ L6:{c:"L",n:"Salade de riz au thon",i:{riz:85,thon:120,oeuf:1,mais:50,tomate:50,concombre:50,huile:8},h:"Riz cuit puis refroidi, œuf dur (10 min). Mélange avec le thon, le maïs, les crudités et l'huile. Se mange froid : parfait pendant une garde."},
+ L7:{c:"L",n:"Steak et patate douce",i:{steak:150,patate:300,hverts:150,huile:5},h:"Patate douce en cubes au four à 200 °C, 30 min. Haricots verts 8 min. Steak : saisi 2 min par face (ou cuit le jour même si tu es chez toi)."},
+ D1:{c:"D",n:"Spaghetti bolognaise",i:{spaghetti:110,boeuf:150,coulis:150,parmesan:15,huile:10,salade:100},h:"Même base que les pâtes bolognaise. La salade verte s'assaisonne au moment de manger."},
+ D2:{c:"D",n:"Poulet curry et riz",i:{poulet:160,riz:100,laitcoco:100,courgette:150,huile:5},h:"Poulet en dés doré à la poêle, ajoute les courgettes en rondelles, 1 c. à café de curry et le lait de coco. 10 min à feu doux. Riz à côté."},
+ D3:{c:"D",n:"Saumon, quinoa et légumes",i:{saumon:170,quinoa:100,courgette:100,carotte:100,huile:10},h:"Quinoa rincé, 12 min à l'eau. Saumon au four 12-15 min. Courgettes et carottes en dés rôties au four 25 min avec l'huile."},
+ D4:{c:"D",n:"Burger maison et pommes de terre",i:{painburger:80,boeuf:150,cheddar:20,pdt:250,huile:10,salade:40,tomate:60},h:"Frites maison au four à 210 °C, 30 min avec l'huile. Steak haché à la poêle 3 min par face, cheddar dessus. Monte le burger avec salade et tomate.",f:"Meilleur cuit le jour même : 30 min."},
+ D5:{c:"D",n:"Porc, purée et légumes",i:{porc:170,pdt:350,lait:100,beurre:10,hverts:150,huile:5},h:"Pommes de terre à l'eau 20 min, écrase avec le lait chaud et le beurre. Filet mignon au four à 180 °C, 25 min (ou en médaillons à la poêle). Haricots verts 8 min."},
+ D6:{c:"D",n:"Pâtes au poulet et pesto",i:{pates:110,poulet:150,pesto:25,parmesan:10,tomcerise:150},h:"Pâtes al dente. Poulet en dés à la poêle. Mélange avec le pesto et les tomates cerises coupées en deux. Parmesan au moment de manger."},
+ D7:{c:"D",n:"Chili con carne et riz",i:{boeuf:150,riz:100,hrouge:100,concassees:150,mais:30,huile:5},h:"Fais revenir le bœuf, ajoute tomates concassées, cumin, paprika et un peu de piment. Ajoute haricots rouges et maïs, 15 min à feu doux. Riz à côté. Encore meilleur réchauffé."},
+};
+
+/* ---------- Étapes de cuisine des plats en boîte ----------
+   Chaque étape : [phase, texte, minuteur en min] ou [clé] pour une étape commune (le riz de 3 recettes cuit en une fois).
+   Phases : 1 mise en place · 2 four · 3 féculents · 4 découpe · 5 poêle · 6 légumes verts · 7 mise en boîtes · 8 rangement.
+   {q:id} = quantité de l'ingrédient × portions, {b} = nombre de boîtes. */
+const PHASES = {1:"Mise en place",2:"Au four",3:"Féculents et œufs",4:"Découpe",5:"À la poêle",6:"Légumes verts",7:"Mise en boîtes",8:"Rangement"};
+const GROUPS = {
+  riz:{ing:"riz",ph:3,min:12,t:"Riz : {q} dans une grande casserole d'eau bouillante salée, 12 min. Égoutte et étale-le pour qu'il refroidisse vite."},
+  pates:{ing:"pates",ph:3,min:9,t:"Pâtes complètes : {q} dans l'eau bouillante salée, 2 min de moins que le paquet (elles finissent au réchauffage). Égoutte, un filet d'huile pour qu'elles ne collent pas."},
+  spaghetti:{ing:"spaghetti",ph:3,min:8,t:"Spaghetti : {q} dans l'eau bouillante salée, 2 min de moins que le paquet. Égoutte, un filet d'huile."},
+  semoule:{ing:"semoule",ph:3,min:5,t:"Semoule : {q} dans un saladier, verse le même volume d'eau bouillante salée, couvre 5 min puis égrène à la fourchette."},
+  quinoa:{ing:"quinoa",ph:3,min:12,t:"Quinoa : rince {q} à l'eau froide, puis 12 min dans l'eau bouillante salée. Égoutte."},
+  poulet:{ing:"poulet",ph:4,t:"Poulet : coupe {q} en dés."},
+  hverts:{ing:"hverts",ph:6,min:8,t:"Haricots verts : {q} dans l'eau bouillante salée, 8 min. Égoutte."},
+  brocoli:{ing:"brocoli",ph:6,min:6,t:"Brocolis : {q} en petits bouquets, 6 min dans l'eau bouillante salée, puis sous l'eau froide pour qu'ils restent verts et croquants."},
+};
+/* Étapes des petits-déjeuners et collations.
+   veille = la veille au soir · jour = tout faire le jour même (1 portion)
+   pre = à l'avance pendant une session « Je cuisine » (quantités pour toutes les portions)
+   fin = ce qui reste à faire le jour même quand c'est préparé à l'avance.
+   {q:id} quantité multipliée par le nombre de portions · {u:id} quantité pour 1 portion · {x:n} n × portions
+   {pots} {sachets} {boites} nombre de contenants · vk : le rappel de la veille reste utile même si c'est préparé. */
+const BC = {
+ B1:{veille:["Dans un bocal, mélange {q:avoine} de flocons d'avoine et {q:lait} de lait. Ferme et mets au frigo pour la nuit."],
+   jour:["Remue le porridge (un trait de lait s'il est trop épais).","Ajoute {q:skyr} de skyr et {q:banane} de banane en rondelles.","Termine avec {q:bc} de beurre de cacahuète. Froid tel quel, ou 1 min 30 au micro-ondes avant d'ajouter le skyr."],
+   pre:["Prépare {pots} (bocal ou boîte) : dans chacun {u:avoine} de flocons et {u:lait} de lait. Couvercle, au frigo (3 jours)."],
+   fin:["Sors ton bocal et remue (un trait de lait s'il est trop épais).","Ajoute {q:skyr} de skyr, {q:banane} de banane en rondelles et {q:bc} de beurre de cacahuète."]},
+ B2:{jour:["Fais griller {q:painc} de pain complet (2 ou 3 tranches).","Cuis {q:oeuf} au plat ou brouillés, poêle antiadhésive, 3 à 4 min. Sel, poivre.","Écrase {q:avocat} d'avocat à la fourchette (sel, citron si tu en as) et étale-le sur le pain.","Pose les œufs dessus. {q:skyr} de skyr à côté."],
+   pre:["Œufs durs : {q:oeuf} dans l'eau bouillante 10 min, puis dans l'eau froide. Au frigo dans leur coquille (4 jours), {u:oeuf} par matin."],
+   fin:["Fais griller {q:painc} de pain complet.","Écale tes {q:oeuf} durs et coupe-les en rondelles.","Ouvre l'avocat le jour même : écrase {q:avocat} sur le pain, ajoute les œufs. {q:skyr} de skyr à côté."]},
+ B3:{vk:1,veille:["Passe {q:fruitsrouges} de fruits rouges du congélateur au frigo."],
+   jour:["Verse {q:fromageblanc} de fromage blanc dans un bol.","Ajoute les fruits rouges ({q:fruitsrouges}) et {q:miel} de miel.","Mets {q:granola} de granola au dernier moment pour qu'il reste croquant."],
+   pre:["Prépare {pots} : dans chacun {u:fromageblanc} de fromage blanc et {u:miel} de miel. Au frigo (3 jours).","Prépare {sachets} de {u:granola} de granola, à part pour qu'il reste croquant. Les fruits rouges restent au congélateur."],
+   fin:["Ajoute les fruits rouges décongelés ({q:fruitsrouges}) dans ton pot.","Verse le sachet de granola juste avant de manger."]},
+ B4:{jour:["Mixe {q:avoine} de flocons, {q:oeuf} et {q:banane} de banane jusqu'à une pâte lisse (ou écrase la banane et mélange à la fourchette).","Poêle antiadhésive à feu moyen, à peine huilée : verse 3 ou 4 petites louches de pâte.","Cuis 2 min, retourne quand des bulles apparaissent, encore 2 min.","Sers avec {q:skyr} de skyr et {q:miel} de miel."],
+   pre:["Mixe {q:avoine} de flocons, {q:oeuf} et {q:banane} de banane jusqu'à une pâte lisse.","Poêle antiadhésive à feu moyen, à peine huilée : cuis {x:4} petits pancakes, 2 min par face.","Laisse refroidir et range-les dans {boites}, 4 par boîte, au frigo (3 jours). Skyr et miel restent à part."],
+   fin:["Réchauffe tes pancakes 30 s au micro-ondes (ou 1 min à la poêle), ou mange-les froids.","Sers avec {q:skyr} de skyr et {q:miel} de miel."]},
+ B5:{jour:["Coupe {q:painc} de pain complet et beurre-le avec {q:beurre} de beurre.","Ajoute {q:jambon} de jambon et {q:emmental} d'emmental, referme.","L'orange ({q:orange}) se mange à côté. À emporter : emballe le sandwich dans du papier alu."],
+   pre:["Sandwichs (2 jours d'avance au plus, le pain rassit) : chacun avec {u:painc} de pain complet, {u:beurre} de beurre, {u:jambon} de jambon et {u:emmental} d'emmental. Emballe-les et mets-les au frigo."],
+   fin:["Prends ton sandwich au frigo et une orange ({q:orange})."]},
+ B6:{jour:["Dans le blender : {q:lait} de lait, {q:banane} de banane en morceaux, {q:avoine} de flocons, {q:bc} de beurre de cacahuète et {q:skyr} de skyr.","Mixe 30 à 45 secondes, jusqu'à ce que ce soit lisse.","Verse dans une gourde ou un grand verre."],
+   pre:["Prépare {pots} : dans chacun {u:avoine} de flocons et {u:bc} de beurre de cacahuète.","Option : coupe {q:banane} de banane en rondelles et congèle-la en {sachets} de {u:banane}, le smoothie sera plus frais."],
+   fin:["Dans le blender : ton pot flocons-beurre de cacahuète, {q:lait} de lait, {q:skyr} de skyr et la banane ({q:banane}).","Mixe 30 à 45 secondes et verse dans une gourde."]},
+ B7:{jour:["Fais griller {q:painc} de pain complet si tu aimes.","Tartine {q:fromagefrais} de fromage frais.","Ajoute {q:saumonfume} de saumon fumé, poivre, un filet de citron si tu en as.","À côté : {q:skyr} de skyr et {q:kiwi} de kiwi (coupé en deux, à la cuillère)."],
+   pre:["Prépare {pots} de {u:skyr} de skyr. Les tartines se font le matin, en 3 minutes."],
+   fin:["Tartine {q:fromagefrais} de fromage frais sur {q:painc} de pain complet, ajoute {q:saumonfume} de saumon fumé et du poivre.","Ton pot de skyr et un kiwi ({q:kiwi}) à côté."]},
+ C1:{jour:["Verse {q:skyr} de skyr dans un bol ou un pot.","Ajoute {q:banane} de banane en rondelles et {q:amandes} d'amandes."],
+   pre:["Prépare {pots} de {u:skyr} de skyr et {sachets} de {u:amandes} d'amandes. La banane se coupe au moment, sinon elle noircit."],
+   fin:["Coupe la banane ({q:banane}) dans ton pot de skyr et ajoute le sachet d'amandes."]},
+ C2:{jour:["Fais griller {q:painc} de pain complet.","Étale {q:bc} de beurre de cacahuète.","Bois {q:lait} de lait à côté."],
+   pre:["Prépare {sachets} de {u:painc} de pain complet et {pots} de {u:bc} de beurre de cacahuète."],
+   fin:["Étale le beurre de cacahuète sur le pain (grillé si tu peux).","Bois {q:lait} de lait à côté."]},
+ C3:{vk:1,veille:["Passe {q:fruitsrouges} de fruits rouges du congélateur au frigo."],
+   jour:["Verse {q:fromageblanc} de fromage blanc dans un bol.","Ajoute les fruits rouges ({q:fruitsrouges}) et {q:noix} de noix concassées."],
+   pre:["Prépare {pots} de {u:fromageblanc} de fromage blanc et {sachets} de {u:noix} de noix. Les fruits rouges restent au congélateur."],
+   fin:["Ajoute les fruits rouges décongelés ({q:fruitsrouges}) et le sachet de noix dans ton pot."]},
+ C4:{jour:["Dans le blender : {q:lait} de lait, {q:banane} de banane en morceaux et {q:avoine} de flocons d'avoine.","Mixe 30 secondes et bois aussitôt."],
+   pre:["Prépare {sachets} de {u:avoine} de flocons.","Option : congèle {q:banane} de banane en rondelles, en {sachets} de {u:banane}, pour un smoothie bien frais."],
+   fin:["Dans le blender : un sachet de flocons, {q:lait} de lait et la banane ({q:banane}).","Mixe 30 secondes et bois aussitôt."]},
+ C5:{jour:["Plonge {q:oeuf} dans l'eau bouillante, 10 min.","Refroidis-les dans l'eau froide, puis écale-les.","Mange-les avec {q:painc} de pain complet, sel et poivre."],
+   fin:["Prends {q:oeuf} durs cuits en session (au frigo) et écale-les.","Mange-les avec {q:painc} de pain complet, sel et poivre."]},
+ C6:{jour:["Verse {q:skyr} de skyr dans un bol.","Ajoute {q:pomme} de pomme en dés.","Verse {q:granola} de granola au dernier moment."],
+   pre:["Prépare {pots} de {u:skyr} de skyr et {sachets} de {u:granola} de granola. La pomme se coupe au moment."],
+   fin:["Coupe la pomme ({q:pomme}) en dés dans ton pot de skyr.","Verse le sachet de granola juste avant de manger."]},
+ C7:{jour:["Tartine {q:fromagefrais} de fromage frais sur {q:painc} de pain complet.","Ajoute {q:jambon} de jambon et referme."],
+   pre:["Mini-sandwichs (2 jours d'avance au plus) : chacun avec {u:painc} de pain complet, {u:fromagefrais} de fromage frais et {u:jambon} de jambon. Emballe-les, au frigo."],
+   fin:["Sors ton mini-sandwich du frigo : prêt à manger."]},
+ C8:{jour:["Verse {q:skyr} de skyr dans un bol.","Ajoute {q:miel} de miel et {q:amandes} d'amandes."],
+   pre:["Prépare {pots} : dans chacun {u:skyr} de skyr et {u:miel} de miel, au frigo (3 jours). Les amandes ({u:amandes} par pot) en sachets à part, pour rester croquantes."],
+   fin:["Verse le sachet d'amandes dans ton pot de skyr au miel."]},
+ C9:{jour:["Étale {q:bc} de beurre de cacahuète sur {q:galettes} de riz.","Ajoute {q:banane} de banane en rondelles. Tout tient sans frigo."],
+   pre:["Prépare {sachets} de {u:galettes} de riz et {pots} de {u:bc} de beurre de cacahuète. Pas besoin de frigo. La banane se prend entière."],
+   fin:["Étale le beurre de cacahuète sur les galettes.","Ajoute la banane ({q:banane}) en rondelles."]},
+ C10:{jour:["Verse {q:cottage} de cottage cheese dans un bol.","Ajoute {q:ananas} d'ananas en dés et {q:noix} de noix concassées."],
+   pre:["Prépare {pots} : dans chacun {u:cottage} de cottage cheese et {u:ananas} d'ananas en dés, au frigo (3 jours). Les noix ({u:noix} par pot) en sachets à part."],
+   fin:["Verse le sachet de noix dans ton pot cottage-ananas."]},
+ C11:{jour:["Mélange {q:avoine} de flocons, {q:bc} de beurre de cacahuète, {q:miel} de miel et {q:choco} de chocolat noir haché.","Forme 3 ou 4 boules avec les mains (mouille-les si ça colle).","30 min au frigo pour qu'elles durcissent."],
+   fin:["Prends 3 ou 4 boules énergétiques faites en session. Elles tiennent sans frigo."]},
+ C12:{jour:["Coupe {q:concombre} de concombre en bâtonnets.","Trempe-les dans {q:houmous} de houmous, avec {q:crackers} de crackers."],
+   pre:["Coupe {q:concombre} de concombre en bâtonnets. Répartis-les dans {pots} avec {u:houmous} de houmous au fond, au frigo (3 jours). Les crackers ({u:crackers} par pot) en sachets à part."],
+   fin:["Sors ton pot houmous-concombre et ton sachet de crackers."]},
+ C13:{jour:["Dans le blender : {q:lait} de lait, {q:banane} de banane, {q:skyr} de skyr et {q:cacao} de cacao non sucré.","Mixe 30 secondes et bois aussitôt."],
+   pre:["Congèle {q:banane} de banane en rondelles, en {sachets} de {u:banane} : le smoothie sera plus frais. Le reste se fait au moment."]},
+ C14:{jour:["Lave la pomme ({q:pomme}) et coupe-la en quartiers si tu veux.","Mange-la avec {q:amandes} d'amandes et {q:choco} de chocolat noir. Tout tient sans frigo."],
+   pre:["Prépare {sachets} : dans chacun {u:amandes} d'amandes et {u:choco} de chocolat noir. Pas besoin de frigo. Les pommes se prennent entières."],
+   fin:["Prends une pomme ({q:pomme}) et ton sachet amandes-chocolat."]},
+};
+const nbC = (p,one,many) => p>1?p+" "+many:"1 "+one;
+const fillBC = (t,r,p) => t.replace(/\{q:(\w+)\}/g,(_,id)=>fq(id,(R[r].i[id]||0)*p)).replace(/\{u:(\w+)\}/g,(_,id)=>fq(id,R[r].i[id]||0))
+  .replace(/\{x:(\d+)\}/g,(_,n)=>n*p).replace(/\{pots\}/g,nbC(p,"pot","pots")).replace(/\{sachets\}/g,nbC(p,"sachet","sachets")).replace(/\{boites\}/g,nbC(p,"boîte","boîtes"))
+  .replace(/ : dans chacun /g,p>1?" : dans chacun ":" : ").replace(/ : chacun avec /g,p>1?" : chacun avec ":" : avec ");
+// C5 et C11 sont toujours faits en session ; les autres quand « Je cuisine » couvre ce repas ce jour-là
+const bcPrepped = (r,d) => r==="C5"||r==="C11"||!!covers()[R[r].c][d];
+// étapes du jour pour 1 portion : ce qui reste à faire si c'est déjà prêt, sinon la recette complète
+function bcSteps(r,d){
+  const S0=BC[r]; if(!S0) return [];
+  const pr=d&&bcPrepped(r,d);
+  const v=(S0.veille&&(!pr||S0.vk))?S0.veille.map(t=>"La veille au soir : "+t.charAt(0).toLowerCase()+t.slice(1)):[];
+  return [...v,...((pr&&S0.fin)||S0.jour)].map(t=>fillBC(t,r,1));
+}
+const STEPS = {
+  L1:[["poulet"],[5,"Poulet-brocolis : poêle bien chaude avec {q:huile} d'huile, dore le poulet 8 à 10 min avec tes épices (paprika, herbes, sel, poivre).",9],["riz"],["brocoli"],[7,"Poulet, riz et brocolis : répartis dans {b}."]],
+  L2:[["pates"],[5,"Bolognaise : fais revenir {q:boeuf} de bœuf haché dans {q:huile} d'huile 5 min. Ajoute {q:coulis} de coulis de tomate, ail, herbes de Provence, sel et poivre. Mijote 10 min à feu doux.",15],[7,"Pâtes bolognaise : répartis dans {b}. Le parmesan ({q:parmesan}) se met au moment de manger."]],
+  L3:[[2,"Pommes de terre : coupe {q:pdt} en quartiers, mélange avec {q:huile} d'huile, sel et paprika. Au four 35 min.",35],[5,"Saumon : pose {q:saumon} sur une plaque (citron, aneth, sel) et enfourne-le pour les 15 dernières minutes des pommes de terre.",15],["hverts"],[7,"Saumon et pommes de terre : répartis dans {b} avec les haricots verts."]],
+  L4:[[4,"Wraps : coupe {q:poulet} de poulet en lamelles."],[5,"Wraps : poêle chaude, dore les lamelles 8 min avec paprika et cumin. Laisse refroidir.",8],[7,"Wraps : mets le poulet dans {b}. Tortillas, avocat, yaourt et crudités se montent le jour même."]],
+  L5:[[4,"Dinde-couscous : coupe {q:dinde} de dinde en lanières, {q:courgette} de courgette et {q:carotte} de carotte en dés."],[5,"Dinde-couscous : dore la dinde 6 à 8 min et réserve-la. Même poêle avec {q:huile} d'huile : légumes 10 min avec ras el hanout ou cumin. Ajoute {q:pchiche} de pois chiches égouttés et la dinde.",18],["semoule"],[7,"Dinde et couscous : répartis dans {b}."]],
+  L6:[["riz"],[4,"Salade de riz : coupe {q:tomate} de tomate et {q:concombre} de concombre en dés, égoutte {q:thon} de thon et {q:mais} de maïs."],[7,"Salade de riz : quand le riz est froid, mélange-le avec le thon, le maïs, les crudités et {q:huile} d'huile. Ajoute 1 œuf dur écalé par boîte. Répartis dans {b}."]],
+  L7:[[2,"Patate douce : coupe {q:patate} en cubes, mélange avec {q:huile} d'huile et du sel. Au four 30 min.",30],["hverts"],[5,"Steaks : saisis {q:steak} de steak 2 min par face. Si tu es chez toi le jour même, cuis-les plutôt au moment de manger.",4],[7,"Steak et patate douce : répartis dans {b}."]],
+  D1:[["spaghetti"],[5,"Bolognaise des spaghetti : fais revenir {q:boeuf} de bœuf haché dans {q:huile} d'huile 5 min, ajoute {q:coulis} de coulis, ail et herbes. Mijote 10 min.",15],[7,"Spaghetti bolognaise : répartis dans {b}. Salade ({q:salade}) et parmesan ({q:parmesan}) au moment de manger."]],
+  D2:[["poulet"],[4,"Curry : coupe {q:courgette} de courgette en rondelles."],["riz"],[5,"Curry : poêle avec {q:huile} d'huile, dore le poulet 5 min, ajoute les courgettes 3 min, puis 1 c. à café de curry par portion et {q:laitcoco} de lait de coco. Mijote 10 min à feu doux.",18],[7,"Poulet curry et riz : répartis dans {b}."]],
+  D3:[[2,"Légumes rôtis : coupe {q:courgette} de courgette et {q:carotte} de carotte en dés, mélange avec {q:huile} d'huile. Au four 25 min.",25],["quinoa"],[5,"Saumon : {q:saumon} au four 12 à 15 min, à côté des légumes.",14],[7,"Saumon, quinoa et légumes : répartis dans {b}."]],
+  D4:[[7,"Burger : rien à cuire aujourd'hui, il se fait le jour même en 30 min. Range {q:boeuf} de bœuf haché au frigo (au congélateur si c'est pour dans plus de 2 jours)."]],
+  D5:[[2,"Porc : sale et poivre {q:porc} de filet mignon, un filet d'huile ({q:huile}), au four 25 min. Laisse reposer 5 min avant de trancher.",25],[3,"Purée : épluche et coupe {q:pdt} de pommes de terre, 20 min dans l'eau bouillante salée.",20],["hverts"],[7,"Porc-purée : écrase les pommes de terre avec {q:lait} de lait chaud et {q:beurre} de beurre. Tranche le porc. Répartis dans {b}."]],
+  D6:[["pates"],["poulet"],[5,"Poulet pesto : poêle chaude, dore le poulet 8 à 10 min.",9],[7,"Pâtes pesto : mélange pâtes, poulet et {q:pesto} de pesto, ajoute {q:tomcerise} de tomates cerises coupées en deux. Répartis dans {b} ; parmesan au moment de manger."]],
+  D7:[["riz"],[5,"Chili : fais revenir {q:boeuf} de bœuf haché dans {q:huile} d'huile 5 min. Ajoute {q:concassees} de tomates concassées, 1 c. à café de cumin et de paprika par portion, un peu de piment. Mijote 10 min, puis ajoute {q:hrouge} de haricots rouges et {q:mais} de maïs égouttés, encore 5 min.",20],[7,"Chili et riz : répartis dans {b}. Il est encore meilleur réchauffé."]],
+};
+
+/* ---------- Rotation sur 4 semaines ----------
+   La semaine est coupée en 3 blocs : lun-mar (2 portions), mer-jeu (2 portions), ven-dim (3 portions).
+   Chaque repas reste le même sur tout le bloc : moins de recettes, moins de paquets entamés, moins cher. */
+const BRK = [["B1","B6","B1"],["B4","B1","B6"],["B3","B6","B1"],["B5","B1","B6"]];
+const CMS = [["C1","C4","C1"],["C5","C1","C4"],["C2","C1","C4"],["C7","C1","C4"]];
+const CAS = [["C8","C9","C11"],["C8","C9","C11"],["C14","C9","C13"],["C8","C11","C9"]];
+const LUNCH = [["L1","L2","L6"],["L4","L1","L5"],["L7","L2","L6"],["L1","L5","L3"]];
+const DINNER = [["D2","D7","D6"],["D2","D4","D1"],["D5","D7","D2"],["D7","D2","D4"]];
+const SLOT_OF_DAY = [0,0,1,1,2,2,2];
+const BLOCK_START = [0,2,4], BLOCK_LEN = [2,2,3];
+const LONG = new Set(["riz","pates","spaghetti","semoule","quinoa","pchiche","hrouge","mais","thon","coulis","concassees","laitcoco","crackers","galettes","huile","avoine","granola","bc","miel","cacao","choco","amandes","noix","ananas","hverts","fruitsrouges","parmesan","pesto","beurre"]);
+const DAYS = ["Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi","Dimanche"];
+const MONTHS = ["janv.","févr.","mars","avr.","mai","juin","juil.","août","sept.","oct.","nov.","déc."];
+const TIMES = {
+  J:["6 h 15 · avant de partir","10 h · sans frigo","12 h 30 · boîte au micro-ondes","16 h · sans frigo","19 h 45 · en rentrant"],
+  G:["6 h 15 · avant de partir","10 h · sans frigo","12 h 30 · boîte au micro-ondes","16 h · sans frigo","20 h · boîte à la caserne"],
+  N:["8 h 30","11 h","13 h","17 h 30 · avant de partir","21 h · boîte à la caserne"],
+  A:["8 h","10 h 30","12 h 30","16 h 30","20 h"],
+  rest:["8 h","10 h 30","12 h 30","16 h 30","20 h"]};
+// Types de garde
+const GT = {J:{n:"Jour 7 h – 19 h",s:"Jour"},N:{n:"Nuit 19 h – 7 h",s:"Nuit"},G:{n:"Garde 24 h",s:"24 h"},A:{n:"Astreinte",s:"Astr."}};
+const GT_ORDER = ["J","N","G","A"];
+
+/* ---------- Dates ---------- */
+const pad = n => String(n).padStart(2,"0");
+const iso = d => d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+const parse = s => { const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d); };
+const addDays = (d,n) => { const x=new Date(d); x.setDate(x.getDate()+n); return x; };
+const monday = d => { const x=new Date(d.getFullYear(),d.getMonth(),d.getDate()); const w=(x.getDay()+6)%7; return addDays(x,-w); };
+const fmt = d => d.getDate()+" "+MONTHS[d.getMonth()];
+const fmtLong = d => DAYS[(d.getDay()+6)%7].toLowerCase()+" "+fmt(d);
+const TODAY = (()=>{const n=new Date();return new Date(n.getFullYear(),n.getMonth(),n.getDate());})();
+
+/* ---------- État (sauvegardé en ligne via db, sinon dans le navigateur) ---------- */
+/* inv : mouvements du placard {d:date, id, q, src, set?}. Achat = ajoute q ; set = « j'en ai q » (q null = en stock, quantité non suivie).
+   La consommation n'est pas stockée : elle se calcule à partir du menu (sessions cuisine et repas du jour). */
+const DEFAULT = {v:4,start:"2026-11-12",firstCook:"2026-11-11",bought:"2026-11-09",guards:{},swaps:{},habits:{},shop:{},cook:{},inv:[],receipts:[],up:{},seeded:0,custom:[],ban:{},picks:{},skip:{},spare:[],dp:{},done:{},have:{},cnt:{}};
+let S = JSON.parse(JSON.stringify(DEFAULT));
+// charge un état sauvegardé ; renvoie true s'il a fallu le mettre à jour
+function load(d){
+  const v=d&&d.v; resetSubs();
+  S=Object.assign(JSON.parse(JSON.stringify(DEFAULT)),d||{});
+  let changed=false;
+  if(v && v<2){ S.swaps={}; S.shop={}; }            // v1 → v2 : la rotation avait changé
+  if(v && v<4){ // v4 : le plan démarre le jeudi 12 novembre, 1re session le 11 avec les courses du 9
+    S.start="2026-11-12"; S.firstCook="2026-11-11"; S.bought="2026-11-09"; S.cook={}; S.shop={};
+    if(S.seeded){ S.inv=S.inv.filter(e=>!(e.src==="liste"&&e.d==="2026-11-09")); if(!(S.receipts||[]).some(r=>r.d==="2026-11-09")) seedList(); }
+    changed=true; }
+  S.v=4;
+  if(!S.seeded){ seedStock(); S.seeded=1; changed=true; }
+  // v11 : les échanges « tous les 4 semaines » et le catalogue deviennent des choix jour par jour
+  if(!S.v11){ migrateDP(); S.v11=1; changed=true; }
+  if(compactInv()) changed=true;
+  return changed;
+}
+const PREF = ["B","CM","L","CA","D"], TBL = {B:()=>BRK,CM:()=>CMS,L:()=>LUNCH,CA:()=>CAS,D:()=>DINNER};
+const prefOf = k => k.replace(/\d$/,"");
+// recette du coach (PDF) pour un jour et un repas
+function coachFor(date,p){ const ws=planWeek(date), w=weekIndex(ws), slot=SLOT_OF_DAY[Math.round((date-ws)/864e5)]; return TBL[p]()[w][slot]; }
+function migrateDP(){
+  S.dp=S.dp||{};
+  const hasOld=Object.keys(S.swaps||{}).length||Object.keys(S.picks||{}).length; if(!hasOld) return;
+  for(let d=startDate(); d<=addDays(TODAY,28); d=addDays(d,1)){
+    const ws=planWeek(d), w=weekIndex(ws), slot=SLOT_OF_DAY[Math.round((d-ws)/864e5)], P=S.picks&&S.picks[iso(ws)];
+    PREF.forEach(p=>{ const k=p+slot, r=P?P[k]:S.swaps[w+"-"+k]; if(r&&r!==coachFor(d,p)){ const o=S.dp[iso(d)]=S.dp[iso(d)]||{}; if(!o[p]) o[p]=r; } });
+  }
+  S.swaps={}; S.picks={};
+}
+let view = {tab:"today", week:null, month:null, paint:"J", hideDone:false, rsub:"recipes", cook:null, prev:"today", draft:null, tkMsg:"", ai:{}};
+let dbRef=null, saveTimer=null, writeChain=Promise.resolve(), lastSaved="", syncMsg="Enregistré sur cet appareil";
+
+function save(){
+  resetSubs();
+  try{ localStorage.setItem("plan-stephane",JSON.stringify(S)); }catch(e){}
+  if(!dbRef) return;
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(()=>{
+    const body=JSON.parse(JSON.stringify(S)); const str=JSON.stringify(body);
+    if(str===lastSaved) return;
+    writeChain=writeChain.then(()=>dbRef.set(body)).then(()=>{lastSaved=str;setSync("Synchronisé");}).catch(()=>setSync("Pas de connexion : enregistré sur cet appareil"));
+  },700);
+}
+function setSync(t){ syncMsg=t; const el=document.getElementById("sync"); if(el) el.textContent=t; }
+async function initDb(){
+  try{
+    if(!window.claude||!window.claude.use) return;
+    const [db,user]=await Promise.all([window.claude.use("db"),window.claude.use("user")]);
+    if(!db||!user) return;
+    const id=await user.id(); if(!id) return;
+    dbRef=db.doc("data/users/"+id+"/state");
+    const timer=setTimeout(()=>setSync("Sauvegarde en ligne injoignable pour l'instant"),10000);
+    let seeded=false;
+    dbRef.onSnapshot(snap=>{
+      if(!snap.metadata.fromCache) clearTimeout(timer);
+      if(snap.exists){
+        const d=JSON.parse(JSON.stringify(snap.data()));
+        const str=JSON.stringify(d);
+        if(!snap.metadata.hasPendingWrites && str!==lastSaved){ lastSaved=str; const changed=load(d); try{localStorage.setItem("plan-stephane",JSON.stringify(S));}catch(e){} if(changed) save(); if(!view.draft) render(); }
+        setSync("Synchronisé");
+      } else if(!snap.metadata.fromCache && !seeded){ seeded=true; save(); }
+    },()=>{ clearTimeout(timer); dbRef=null; setSync("Enregistré sur cet appareil"); });
+  }catch(e){}
+}
+
+/* ---------- Logique du plan ---------- */
+const startDate = () => parse(S.start);
+// début de la semaine du plan qui contient d (les semaines commencent le jour de départ du plan)
+const planWeek = d => { const x=new Date(d.getFullYear(),d.getMonth(),d.getDate()), k=((Math.round((x-startDate())/864e5)%7)+7)%7; return addDays(x,-k); };
+const dayOf = (ws,i) => DAYS[(addDays(ws,i).getDay()+6)%7];
+const dShort = d => DAYS[(d.getDay()+6)%7].slice(0,3).toLowerCase()+". "+d.getDate();
+const datesTxt = ds => !ds.length ? "" : ds.length===1 ? "repas du "+fmtLong(ds[0]) : "repas du "+fmtLong(ds[0])+" au "+fmtLong(ds[ds.length-1]);
+// jours encore couverts par la session automatique n de la semaine ws
+const rangeTxt = (ws,n) => datesTxt(sessionsFor(ws)["d"+n].map(i=>addDays(ws,i)));
+function weekIndex(ws){ const diff=Math.round((ws-startDate())/864e5/7); return ((diff%4)+4)%4; }
+// "" = libre, sinon J / N / G (24 h) / A (astreinte). Ancienne valeur 1 = garde de jour.
+const gType = d => { const v=S.guards[iso(d)]; return v===1||v===true?"J":(v||""); };
+const nextType = t => t ? (GT_ORDER[GT_ORDER.indexOf(t)+1]||"") : "J";
+function mealsFor(date){
+  const ws=planWeek(date), w=weekIndex(ws), d=Math.round((date-ws)/864e5), slot=SLOT_OF_DAY[d], g=gType(date);
+  const away = g==="J"||g==="G"; // absent toute la journée : collations sans frigo
+  // semaine choisie dans le catalogue : tes choix (le reste = menu du coach) ; sinon tes échanges habituels
+  const P=S.picks&&S.picks[iso(ws)], DP=(S.dp&&S.dp[iso(date)])||{}, sw=k=>DP[prefOf(k)]||(P?P[k]:S.swaps[w+"-"+k]);
+  const b = sw("B"+slot) || BRK[w][slot];
+  let cm = sw("CM"+slot), ca = sw("CA"+slot);
+  const cmAuto = !cm, caAuto = !ca;
+  // jour de garde : collations sans frigo si celle prévue en a besoin
+  if(!cm) cm = CMS[w][slot]; if(!ca) ca = CAS[w][slot];
+  const cmSub = away && cmAuto && !NOMADE.has(cm), caSub = away && caAuto && !NOMADE.has(ca);
+  if(cmSub) cm = "C9"; if(caSub) ca = "C14";
+  const l = sw("L"+slot) || LUNCH[w][slot];
+  const dn = sw("D"+slot) || DINNER[w][slot];
+  const portion = "Boîte "+(d-BLOCK_START[slot]+1)+"/"+BLOCK_LEN[slot];
+  const m={w,d,ws,date,slot,g,away,portion,cmAuto,caAuto};
+  m.list=fixList([
+    {k:"B"+slot,r:b,cat:"B"},{k:"CM"+slot,r:cm,cat:"C",lab:"Collation du matin",nomade:away&&cmAuto},
+    {k:"L"+slot,r:l,cat:"L"},{k:"CA"+slot,r:ca,cat:"C",lab:"Collation de l'après-midi",nomade:away&&caAuto},{k:"D"+slot,r:dn,cat:"D"}],m);
+  return m;
+}
+
+/* ---------- Remplacements automatiques (toujours parmi les recettes du PDF, même catégorie, mêmes kcal)
+   1. un ingrédient de ta liste « je n'en achète pas » → recette remplacée partout, et jamais dans la liste de courses
+   2. jusqu'aux prochaines courses : un ingrédient absent du placard → recette remplacée par une que ton placard permet
+   Après les prochaines courses, le menu reste celui du PDF et ce qui manque va dans la liste de courses. ---------- */
+const NOMADE = new Set(["C9","C11","C14"]);
+let RAW=0;   // > 0 : menu du PDF sans tenir compte du placard (liste de courses)
+let SUBC=null;
+function resetSubs(){ SUBC=null; }
+const banned = r => Object.keys(R[r].i).filter(id=>S.ban&&S.ban[id]);
+const missIn = (r,snap) => Object.entries(R[r].i).filter(([id,q])=>{ const v=snap[id]; return v===undefined||(v!==null&&v<q*0.5); }).map(([id])=>id);
+const ingNames = a => a.map(id=>SHORT[id].toLowerCase()).join(", ");
+function subCtx(){
+  if(SUBC) return SUBC;
+  SUBC={memo:{},wk:{},ses:{},cv:null,snap:null,end:null};
+  // le placard décide jusqu'aux prochaines courses ; le jour des courses, on attend le ticket
+  let end=null, shop=null;
+  for(let ws=addDays(planWeek(TODAY),-7); ws<=addDays(TODAY,21); ws=addDays(ws,7)){
+    if(ws<startDate()) continue;
+    const c=weekCut(ws), dr=sessionsFor(ws).drive;
+    if(c>TODAY&&(!end||c<end)) end=c;
+    if(dr&&iso(dr)===iso(TODAY)&&c>=TODAY) shop=c; // courses aujourd'hui : leur période attend le ticket
+  }
+  SUBC.end = shop&&(!end||shop<end) ? shop : end;
+  return SUBC;
+}
+// placard au début de chaque jour (achats et corrections du jour compris), d'après le menu du PDF
+function rawSnaps(){
+  const C=subCtx(); if(C.snap) return C.snap;
+  const lo=addDays(startDate(),-1), hi=C.end&&C.end>lo?C.end:lo, out={};
+  RAW++; let cons; try{ cons=consumption(lo,hi); } finally{ RAW--; }
+  const inv=S.inv.map((e,i)=>({e,i})).sort((a,b)=>a.e.d<b.e.d?-1:a.e.d>b.e.d?1:a.i-b.i);
+  const s={}, add=e=>{ if(e.set) s[e.id]=e.q; else s[e.id]= s[e.id]===null?null:(s[e.id]||0)+e.q; };
+  let k=0;
+  for(let d=lo; d<=hi; d=addDays(d,1)){
+    const D=iso(d), day=[];
+    while(k<inv.length && inv[k].e.d<=D) day.push(inv[k++].e);
+    day.filter(e=>!e.set).forEach(add);
+    const snap=Object.assign({},s); day.filter(e=>e.set).forEach(e=>snap[e.id]=e.q); out[D]=snap;
+    const c=cons[D]; if(c) for(const id in c){ const v=s[id]; if(v===undefined||v===null) continue; s[id]=Math.max(0,v-c[id]); }
+    day.filter(e=>e.set).forEach(add);
+  }
+  return C.snap=out;
+}
+const weekIngs = w => { const C=subCtx(); if(C.wk[w]) return C.wk[w]; const s=new Set(); [BRK,CMS,CAS,LUNCH,DINNER].forEach(T=>T[w].forEach(r=>Object.keys(R[r].i).forEach(i=>s.add(i)))); return C.wk[w]=s; };
+// autre recette de la même catégorie : faisable avec le placard, qui reprend les ingrédients de la semaine
+function pickAlt(x,m,snap,prevC){
+  const wk=weekIngs(m.w); let best=null, bs=-Infinity;
+  Object.keys(R).forEach(id=>{
+    if(R[id].c!==x.cat||id===x.r||banned(id).length) return;
+    const ings=Object.keys(R[id].i);
+    let sc=(snap?-100*missIn(id,snap).length:0) + 10*ings.filter(i=>wk.has(i)).length/ings.length;
+    if(x.nomade) sc+=NOMADE.has(id)?50:0;
+    if(id===prevC) sc-=5;
+    if(sc>bs){ bs=sc; best=id; }
+  });
+  return best;
+}
+function fixMeal(x,m,prevC){
+  // v11 : plus de remplacement selon le placard ; seulement les aliments que tu n'aimes pas
+  const ban=banned(x.r), miss=[], snap=null;
+  if(!ban.length) return x;
+  const alt=pickAlt(x,m,snap,prevC);
+  if(!alt) return Object.assign({},x,{miss});
+  const altMiss=snap?missIn(alt,snap):[];
+  if(!ban.length && altMiss.length) return Object.assign({},x,{miss}); // rien de mieux au placard : on garde la recette prévue
+  return Object.assign({},x,{r:alt,miss:altMiss,sub:{from:x.r,why:ban.length?"tu n'aimes pas : "+ingNames(ban):"il manque "+ingNames(miss)}});
+}
+function fixList(list,m){
+  const C=subCtx(), key=iso(m.date)+(RAW?"r":"f");
+  if(!C.memo[key]){ let prevC=null; C.memo[key]=list.map(x=>{ const y=fixMeal(x,m,prevC); if(x.cat==="C") prevC=y.r; return y; }); }
+  return C.memo[key].map(x=>Object.assign({},x));
+}
+/* Disponibilité d'un jour pour cuisiner ou aller au drive :
+   3 libre · 2 astreinte ou lendemain de nuit · 1 jour de nuit (matin) ou lendemain de 24 h · 0 garde de jour / 24 h */
+function freeScore(d){
+  const t=gType(d), p=gType(addDays(d,-1));
+  let s = t==="J"||t==="G" ? 0 : t==="N" ? 1 : t==="A" ? 2 : 3;
+  if(p==="G") s=Math.min(s,1); else if(p==="N") s=Math.min(s,2);
+  return s;
+}
+function pickBest(cands){ let best=null,bs=0; cands.forEach(d=>{ const s=freeScore(d); if(s>bs){bs=s;best=d;} }); return best; }
+
+/* ---------- Sessions « Je cuisine » : tu choisis les jours à préparer ----------
+   S.custom = [{id, date (jour où tu cuisines), days:[jours mangés], parts:{B, C, L, D}}]
+   B = petits-déjeuners, C = collations, L = déjeuners, D = dîners (ancien format : LD = déjeuners et dîners).
+   Si une session prépare le déjeuner d'un jour mais pas son dîner (ou l'inverse), l'autre est cuisiné frais ce jour-là. */
+const FRIDGE_DAYS = 4; // au-delà, les boîtes vont au congélateur
+const customs = () => (S.custom||[]).filter(c=>c.days&&c.days.length);
+// jours couverts par une session « Je cuisine » pour une partie : {iso: session}
+const hasP = (c,p) => p==="LD" ? hasP(c,"L")||hasP(c,"D") : !!(c.parts[p]||((p==="L"||p==="D")&&c.parts.LD));
+// LD = jours dont le déjeuner ou le dîner est pris en charge par « Je cuisine » (ils sortent des sessions prévues)
+function coverOf(part){ const o={}; customs().forEach(c=>{ if(hasP(c,part)) c.days.forEach(d=>{ if(!o[d]) o[d]=c; }); }); return o; }
+const covers = () => ({LD:coverOf("LD"),L:coverOf("L"),D:coverOf("D"),B:coverOf("B"),C:coverOf("C")});
+// repas cuisinés frais : {"2026-11-12|D": session}
+/* Repas pas mangés : S.skip["2026-11-16|L0"] = {why, made, box}
+   made 0 : rien n'avait été cuisiné, les aliments restent au placard (et la session en prépare un de moins)
+   made 1 : une boîte ou un pot était prêt ; box = less (finalement pas cuisinée) · spare (mangée un autre jour) · freeze · trash
+   Boîtes en plus : S.spare = [{id, r, from, made, where, use}] ; use = le repas qu'elle remplace, qui n'est alors pas cuisiné */
+const skipOf = (d,k) => S.skip&&S.skip[d+"|"+k];
+const spareFor = (d,k) => (S.spare||[]).find(s=>s.use===d+"|"+k);
+const notCooked = (d,k) => { const s=skipOf(d,k); return !!(s&&(!s.made||s.box==="less")) || !!spareFor(d,k); };
+const slotKey = (d,p) => p+SLOT_OF_DAY[Math.round((parse(d)-planWeek(parse(d)))/864e5)];
+const WHY = {garde:"Garde ou intervention",resto:"Resto ou caserne",faim:"Pas faim",autre:"Autre"};
+const catOfKey = k => k[0]==="C"?"C":k[0];
+function freshOf(){ const cv=covers(), o={}; Object.keys(cv.LD).forEach(d=>["L","D"].forEach(p=>{ if(!cv[p][d] && !notCooked(d,slotKey(d,p))) o[d+"|"+p]=cv.LD[d]; })); return o; }
+const freshMeal = (d,p) => mealsFor(parse(d)).list[p==="L"?2:4].r;
+const meatOf = r => Object.entries(R[r].i).filter(([id])=>ING[id][1]==="viande"||ING[id][1]==="poisson").map(([id,q])=>SHORT[id].toLowerCase()+" "+q+" g");
+const isFrozen = (c,d) => Math.round((parse(d)-parse(c.date))/864e5) > FRIDGE_DAYS;
+const started = key => !!(S.cook[key] && Object.keys(S.cook[key]).length);
+
+function sessionsFor(ws){
+  const st=startDate(), lo=addDays(st,-1), ok=a=>a.filter(d=>d>=lo); // au plus tôt la veille du début du plan
+  const first = iso(ws)===iso(st), cov=coverOf("LD");
+  // les jours déjà préparés avec « Je cuisine » sortent de la session prévue
+  const rem = n => (n===1?[0,1,2,3]:[4,5,6]).filter(i=>!cov[iso(addDays(ws,i))]);
+  const d1=rem(1), d2=rem(2);
+  // session raccourcie : la veille ou le jour du premier repas qui reste, pas dans le passé si elle n'est pas commencée
+  const moved = (r,n) => { const f=addDays(ws,r[0]); let c=ok([addDays(f,-1),f]); if(!started(sessionKey(ws,n))){ const fut=c.filter(d=>d>=TODAY); if(fut.length) c=fut; } return pickBest(c); };
+  const s1 = !d1.length ? null : d1[0]!==0 ? moved(d1,1) : first&&S.firstCook ? parse(S.firstCook) : pickBest(ok([addDays(ws,-1),ws]));
+  const s2 = !d2.length ? null : d2[0]!==4 ? moved(d2,2) : pickBest([addDays(ws,3),addDays(ws,2)]);
+  // drive : la veille de la session 1 si possible, sinon le matin même (1re semaine : courses déjà faites)
+  let drive=null;
+  if(first&&S.bought) drive=parse(S.bought);
+  else if(s1){ const v=addDays(s1,-1); drive = (v>=lo && freeScore(v)>=1) ? v : s1; }
+  else drive = pickBest([addDays(ws,-1),addDays(ws,-2),ws]);
+  return {s1,s2,drive,d1,d2,gone1:!d1.length,gone2:!d2.length};
+}
+// viande et poisson de la session 2 : à congeler au retour du drive
+function freezeList(ws,k){
+  const need={};
+  sessionsFor(ws).d2.forEach(i=>{ const day=addDays(ws,i), m=mealsFor(day); m.list.filter(x=>(x.cat==="L"||x.cat==="D")&&!notCooked(iso(day),x.k)).forEach(x=>Object.entries(R[x.r].i).forEach(([id,q])=>{ const a=ING[id][1]; if(a==="viande"||a==="poisson") need[id]=(need[id]||0)+q; })); });
+  return Object.entries(need).map(([id,q])=>SHORT[id]+" "+q+" g");
+}
+// tout ce qui tombe un jour donné : garde, session, drive, commande, décongélation
+function eventsOn(date){
+  const k=iso(date), ev={g:gType(date),tasks:[]};
+  [planWeek(date), addDays(planWeek(date),7)].forEach(ws=>{
+    if(ws<startDate()) return;
+    const s=sessionsFor(ws), fz=(s.s2&&s.drive&&Math.round((s.s2-s.drive)/864e5)>=3)?freezeList(ws,s.d2.length):[];
+    if(s.s1 && iso(s.s1)===k) ev.tasks.push({t:"cook",n:1,ws});
+    if(s.s2 && iso(s.s2)===k) ev.tasks.push({t:"cook",n:2,ws});
+    if(s.drive && iso(s.drive)===k) ev.tasks.push({t:"drive",ws,fz});
+    if(s.drive && iso(addDays(s.drive,-1))===k) ev.tasks.push({t:"order",ws});
+    if(s.s2 && fz.length && iso(addDays(s.s2,-1))===k) ev.tasks.push({t:"thaw",ws,fz});
+    if(fz.length && s.drive && s.drive<TODAY && iso(ws)===iso(startDate()) && iso(TODAY)===k && date<addDays(s.s2,-1)) ev.tasks.push({t:"freezeNow",ws,fz,s2:s.s2});
+  });
+  customs().forEach(c=>{
+    if(c.date===k) ev.tasks.push({t:"cook",key:c.id,c});
+    if(hasP(c,"LD")) c.days.forEach(d=>{ if(isFrozen(c,d) && iso(addDays(parse(d),-1))===k) ev.tasks.push({t:"thawC",c,d}); });
+  });
+  Object.keys(freshOf()).forEach(f=>{ const [d,p]=f.split("|"); if(d===k) ev.tasks.push({t:"fresh",key:"F"+f,d,p}); });
+  return ev;
+}
+const ldNames = (day,c) => mealsFor(day).list.filter(x=>(x.cat==="L"||x.cat==="D")&&(!c||hasP(c,x.cat))).map(x=>R[x.r].n).join(" et ");
+function taskText(x){
+  if(x.t==="fresh") return `${x.p==="D"?"Le soir : cuisine ton dîner":"À midi : cuisine ton déjeuner"} (${R[freshMeal(x.d,x.p)].n})`;
+  if(x.t==="cook" && x.c) return `Je cuisine (${datesTxt(x.c.days.map(parse))})`;
+  if(x.t==="cook") return `Session cuisine ${x.n} (${rangeTxt(x.ws,x.n)})`;
+  if(x.t==="thawC") return `Le soir, passe du congélateur au frigo les boîtes de demain : ${ldNames(parse(x.d),x.c)}`;
+  if(x.t==="freezeNow") return `Mets au congélateur dès aujourd'hui ce qui sert à la session 2 (${fmtLong(x.s2)}) : ${x.fz.join(", ")}. Sors-le la veille au soir.`;
+  if(x.t==="drive") return `Récupérer le drive${x.fz.length?" · congeler en rentrant : "+x.fz.join(", "):""}`;
+  if(x.t==="order") return `Passer la commande drive (semaine du ${fmt(x.ws)})`;
+  if(x.t==="thaw") return `Le soir, sortir du congélateur pour le frigo : ${x.fz.join(", ")}`;
+  return "";
+}
+function remindersFor(day){
+  const out=[], tm=addDays(day,1), evT=eventsOn(day), evM=eventsOn(tm);
+  evT.tasks.forEach(x=>{ if(x.t==="order"||x.t==="thaw"||x.t==="drive"||x.t==="freezeNow"||x.t==="thawC") out.push(taskText(x)); });
+  if(tm>=startDate()){
+    const m=mealsFor(tm), n=x=>R[m.list[x].r].n;
+    if(evM.g==="J") out.push(`Garde de jour demain : prépare ton sac ce soir. Boîte du déjeuner (${n(2)}), collations sans frigo (${n(1)}, ${n(3)}) et petit-déj à emporter (${n(0)}).`);
+    if(evM.g==="G") out.push(`Garde 24 h demain : prends 2 boîtes, celle du déjeuner (${n(2)}) et celle du dîner (${n(4)}), plus tes collations sans frigo (${n(1)}, ${n(3)}).`);
+    if(evM.g==="N") out.push(`Garde de nuit demain soir : prépare la boîte du dîner (${n(4)}) et une collation pour la nuit. Essaie de faire une sieste dans l'après-midi.`);
+    if(evM.g==="A") out.push(`Astreinte demain : garde une collation sans frigo dans ton sac au cas où tu dois partir.`);
+  }
+  if(tm>=startDate()){ const k=iso(tm), v=[];
+    mealsFor(tm).list.forEach(x=>{ const S0=BC[x.r]; if(S0&&S0.veille&&(!bcPrepped(x.r,k)||S0.vk)) v.push(S0.veille.map(t=>fillBC(t,x.r,1)).join(" ").replace(/\.$/,"")+` (${R[x.r].n})`); });
+    if(v.length) out.push("Ce soir pour demain : "+v.map(t=>t.charAt(0).toLowerCase()+t.slice(1)).join(" ; ")+"."); }
+  evM.tasks.forEach(x=>{ if(x.t==="fresh"){ const r=freshMeal(x.d,x.p), mt=meatOf(r); out.push(`Demain ${x.p==="D"?"soir":"midi"}, tu cuisines ton ${x.p==="D"?"dîner":"déjeuner"} (${R[r].n}).${mt.length?" Si "+mt.join(" et ")+" est au congélateur, passe-le au frigo ce soir.":""}`); } });
+  { const nws=addDays(planWeek(day),7), dr=nws>=startDate()?sessionsFor(nws).drive:null;
+    const chosen=Array.from({length:7},(_,i)=>iso(addDays(nws,i))).some(d=>S.dp&&S.dp[d]&&Object.keys(S.dp[d]).length);
+    if(dr && !chosen && dr>=day && (dr-day)/864e5<=2) out.push(`Choisis tes repas de la semaine du ${fmt(nws)} avant le drive (${fmtLong(dr)}) : onglet Semaine, touche un repas pour le changer. Sinon, ce sera le menu du coach.`); }
+  evM.tasks.forEach(x=>{ if(x.t==="cook") out.push("Demain : "+taskText(x).charAt(0).toLowerCase()+taskText(x).slice(1)+". Vérifie que tu as tous les ingrédients."); if(x.t==="drive") out.push("Demain : récupérer le drive."); });
+  return out;
+}
+// contenu d'une session automatique : seulement les jours qui ne sont pas déjà préparés
+function sessionContent(ws,which){
+  const w=weekIndex(ws), keep=new Set(sessionsFor(ws)["d"+which]), slots = which===1?[0,1]:[2], days = which===1?[0,1,2,3]:[4,5,6], covC=coverOf("C");
+  const items=[];
+  slots.forEach(s=>{
+    const dd=Array.from({length:BLOCK_LEN[s]},(_,i)=>BLOCK_START[s]+i).filter(i=>keep.has(i)); if(!dd.length) return;
+    // un repas sauté à l'avance ou remplacé par une boîte en plus : une boîte de moins
+    // un même plat sur plusieurs jours = cuisiné en une fois
+    [["L",2],["D",4]].forEach(([c,j])=>{ const g={};
+      dd.filter(i=>!notCooked(iso(addDays(ws,i)),c+s)).forEach(i=>{ const day=addDays(ws,i), r=mealsFor(day).list[j].r; (g[r]=g[r]||[]).push(day); });
+      Object.entries(g).forEach(([r,dates])=>items.push({r,p:dates.length,dates})); });
+  });
+  let balls=0, eggs=0, eggsC=0;
+  days.forEach(d=>{ const day=addDays(ws,d), m=mealsFor(day), cC=covC[iso(day)];
+    m.list.forEach(x=>{ if(notCooked(iso(day),x.k)) return; if(x.cat==="C" && !cC){ if(x.r==="C11") balls++; if(x.r==="C5"){ eggs+=2; eggsC+=2; } } if((x.cat==="L"||x.cat==="D") && keep.has(d) && R[x.r].i.oeuf) eggs+=R[x.r].i.oeuf; }); });
+  return {items,extra:[],balls,eggs,eggsC,freeze:[]};
+}
+// contenu d'une session « Je cuisine »
+function customContent(c){
+  const byR={}, ex={}, add=(o,r,day)=>{ const x=o[r]=o[r]||{r,p:0,dates:[]}; x.p++; x.dates.push(day); };
+  let balls=0, eggs=0, eggsC=0; const freeze=[];
+  c.days.forEach(d=>{ const day=parse(d); if(day<startDate()) return; const m=mealsFor(day);
+    if(hasP(c,"LD") && isFrozen(c,d)) freeze.push(day);
+    m.list.forEach(x=>{
+      if(notCooked(d,x.k)) return;
+      if((x.cat==="L"||x.cat==="D") && hasP(c,x.cat)){ add(byR,x.r,day); if(R[x.r].i.oeuf) eggs+=R[x.r].i.oeuf; }
+      if(x.cat==="B" && c.parts.B) add(ex,x.r,day);
+      if(x.cat==="C" && c.parts.C){ if(x.r==="C11") balls++; else if(x.r==="C5"){ eggs+=2; eggsC+=2; } else add(ex,x.r,day); }
+    });
+  });
+  return {items:Object.values(byR),extra:Object.values(ex),balls,eggs,eggsC,freeze,fzBoxes:freeze.length*((hasP(c,"L")?1:0)+(hasP(c,"D")?1:0))};
+}
+// une session, automatique (clé "semaine|n") ou « Je cuisine » (clé "c…")
+function sessionInfo(key){
+  if(!key) return null;
+  // repas cuisiné frais : clé "F2026-11-12|D"
+  if(key[0]==="F"){ const [d,p]=key.slice(1).split("|"); if(!freshOf()[d+"|"+p]) return null; const day=parse(d), r=freshMeal(d,p);
+    return {key,fresh:1,date:day,title:p==="D"?"Dîner à cuisiner":"Déjeuner à cuisiner",range:(p==="D"?"Le soir, ":"À midi, ")+"1 portion à manger tout de suite",
+      content:()=>({items:[{r,p:1,dates:[day]}],extra:[],balls:0,eggs:R[r].i.oeuf||0,eggsC:0,freeze:[]})}; }
+  if(key[0]==="c"){ const c=(S.custom||[]).find(x=>x.id===key); if(!c) return null;
+    return {key,c,date:parse(c.date),title:"Je cuisine",range:datesTxt(c.days.map(parse)),content:()=>customContent(c)}; }
+  const [w,n]=key.split("|"), ws=parse(w), N=+n, s=sessionsFor(ws);
+  return {key,ws,n:N,date:s["s"+N]||(N===1?ws:addDays(ws,4)),title:"Session cuisine "+N,range:rangeTxt(ws,N),content:()=>sessionContent(ws,N)};
+}
+/* ---------- Prix : ceux de tes tickets remplacent les estimations ---------- */
+const fmts = id => { const b=ING[id][3]; return Array.isArray(b)?b:[b]; };
+const defUP = id => { const f=fmts(id)[0]; return f.p/(f.s||f.pw); };           // prix repère par g, ml ou pièce
+const UP = id => (S.up&&S.up[id]) || defUP(id);
+const fmtPrice = (id,f) => S.up&&S.up[id] ? Math.round(S.up[id]*(f.s||f.pw)*100)/100 : f.p;
+// combinaison de formats la moins chère qui couvre q
+function packs(id,q){
+  const fm=fmts(id);
+  if(fm[0].pw){ const f=fm[0], n=Math.max(1,Math.ceil(q/f.pw-1e-9)); return {label:n+" "+(n>1?f.w[1]:f.w[0]),price:n*fmtPrice(id,f),units:n*f.pw}; }
+  const [a,b]=fm;
+  if(!b){ const n=Math.max(1,Math.ceil(q/a.s-1e-9)); return {label:n+" × "+a.l,price:n*fmtPrice(id,a),units:n*a.s}; }
+  let best=null; const pa=fmtPrice(id,a), pb=fmtPrice(id,b);
+  for(let i=0;i<=Math.ceil(q/a.s);i++) for(let j=0;j<=Math.ceil(q/b.s);j++){
+    if((i||j)===0||i*a.s+j*b.s<q) continue; const c=i*pa+j*pb; if(!best||c<best.c) best={c,i,j};
+  }
+  return {label:[best.j?best.j+" × "+b.l:"",best.i?best.i+" × "+a.l:""].filter(Boolean).join(" + "),price:best.c,units:best.i*a.s+best.j*b.s};
+}
+const fq = (id,q) => {
+  const u=ING[id][2]; q=Math.round(q);
+  if(u==="pc") return id==="oeuf"?(q>1?q+" œufs":q+" œuf"):q+" "+(id==="galettes"?"galettes":"pièces");
+  return q>=1000 ? (q/1000).toLocaleString("fr-FR",{maximumFractionDigits:2})+(u==="ml"?" L":" kg") : q+" "+u;
+};
+const euro = n => (Math.round(n*100)/100).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})+" €";
+
+/* ---------- Placard ---------- */
+// jour où un repas sort du placard : jour de la session qui le prépare, sinon le jour même
+function whenUsed(day,m,x,s,cv){
+  const k=iso(day), c=cv[x.cat][k];
+  if(c) return parse(c.date);
+  if((x.cat==="L"||x.cat==="D") && cv.LD[k]) return day; // cuisiné frais ce jour-là
+  if(x.cat==="L"||x.cat==="D") return m.slot<2 ? (s.s1||m.ws) : (s.s2||addDays(m.ws,4));
+  return day;
+}
+// besoins de la semaine ws. Avec cut : tout ce qui sera cuisiné ou mangé entre ces courses et les suivantes
+// (une grosse préparation qui déborde sur la semaine d'après est comptée ici)
+// (menu du PDF : ce qui manque au placard est à acheter, sauf ta liste « je n'en achète pas »)
+function needsFor(ws,cut){
+  const need={}; RAW++;
+  try{
+    if(cut){ Object.values(consumption(cut,addDays(weekCut(addDays(ws,7)),-1))).forEach(o=>Object.entries(o).forEach(([id,q])=>need[id]=(need[id]||0)+q)); return need; }
+    for(let d=0; d<7; d++) mealsFor(addDays(ws,d)).list.forEach(x=>Object.entries(R[x.r].i).forEach(([id,q])=>need[id]=(need[id]||0)+q));
+    return need;
+  } finally { RAW--; }
+}
+// ce que le menu retire du placard, jour par jour : plats préparés le jour de la session, le reste le jour même
+function consumption(from,to){
+  const out={}, st=startDate(), lo=addDays(st,-1); if(to<lo) return out;
+  const a=from<lo?lo:from, cv=covers();
+  for(let ws=planWeek(a); ws<=addDays(to,14); ws=addDays(ws,7)){
+    if(ws<st) continue;
+    const s=sessionsFor(ws);
+    for(let d=0; d<7; d++){
+      const day=addDays(ws,d), m=mealsFor(day);
+      m.list.forEach(x=>{
+        if(notCooked(iso(day),x.k)) return; // pas mangé et pas cuisiné : les aliments restent au placard
+        const when=whenUsed(day,m,x,s,cv);
+        if(when<a||when>to) return;
+        const o=out[iso(when)]=out[iso(when)]||{};
+        Object.entries(R[x.r].i).forEach(([id,q])=>o[id]=(o[id]||0)+q);
+      });
+    }
+  }
+  return out;
+}
+// stock en fin de journée asOf ; les achats sont comptés jusqu'à buyUntil
+function stockAt(asOf,buyUntil){
+  const A=iso(asOf), B=iso(buyUntil&&buyUntil>asOf?buyUntil:asOf), ev=[], cons=consumption(addDays(startDate(),-1),asOf);
+  S.inv.forEach((e,i)=>{ if(e.d<=B) ev.push({d:e.d,o:e.set?2:0,i,e}); });
+  for(const d in cons) ev.push({d,o:1,i:0,c:cons[d]});
+  ev.sort((x,y)=>x.d<y.d?-1:x.d>y.d?1:(x.o-y.o)||(x.i-y.i));
+  const s={}, short={};
+  ev.forEach(x=>{
+    if(x.c){ for(const id in x.c){ const v=s[id]; if(v===undefined||v===null) continue; const n=v-x.c[id]; if(n<-0.5) short[id]=x.d; s[id]=Math.max(0,n); } }
+    else if(x.e.set) s[x.e.id]=x.e.q;
+    else s[x.e.id]= s[x.e.id]===null ? null : (s[x.e.id]||0)+x.e.q;
+  });
+  return {s,short};
+}
+// ce que tu auras avant les courses de la semaine ws
+const weekCut = ws => { const s1=sessionsFor(ws).s1; return s1&&s1<ws?s1:ws; };
+const stockForWeek = ws => stockAt(addDays(weekCut(ws),-1), TODAY);
+// au tout début : la liste du menu 1 a été achetée le 9 novembre, le reste était déjà dans les placards
+const OWNED=["huile","avoine","miel","bc","cacao","riz","pates","spaghetti","semoule"];
+function seedList(){ const d="2026-11-09"; Object.entries(needsFor(startDate())).forEach(([id,q])=>{ if(!OWNED.includes(id)) S.inv.push({d,id,q:packs(id,q).units,src:"liste"}); }); }
+function seedStock(){ seedList(); OWNED.forEach(id=>S.inv.push({d:"2026-11-09",id,q:null,set:1,src:"manuel"})); }
+// garde la sauvegarde légère : au-delà de 600 mouvements, on résume ce qui a plus de 30 jours
+function compactInv(){
+  if(S.inv.length<600) return false;
+  const cut=addDays(TODAY,-30), ci=iso(cut), {s}=stockAt(cut);
+  S.inv=S.inv.filter(e=>e.d>ci);
+  Object.entries(s).forEach(([id,q])=>S.inv.unshift({d:ci,id,q,set:1,src:"bilan"}));
+  (S.receipts||[]).slice(20).forEach(r=>{ r.lines=[]; });
+  return true;
+}
+function shoppingFor(ws){
+  const need=needsFor(ws,weekCut(ws)), st=stockForWeek(ws).s;
+  return Object.entries(need).map(([id,q])=>{
+    const [name,aisle]=ING[id], have=st[id], unknown=have===null;
+    let rest = unknown ? 0 : Math.max(0,q-(have||0));
+    if(rest>0 && rest<=q*0.1 && have>0) rest=0; // il en reste presque assez
+    const p = rest>0 ? packs(id,rest) : null;
+    const fromStock = unknown ? q : Math.min(q,have||0);
+    return {id,name,aisle,q,have,unknown,rest,label:p?p.label:"",price:p?p.price:0,units:p?p.units:0,saved:fromStock*UP(id),need:fq(id,q),haveTxt:unknown?"en stock":fq(id,have||0)};
+  });
+}
+
+/* ---------- Session guidée : toutes les recettes de la session dans le bon ordre ---------- */
+const fill = (txt,r,p) => txt.replace(/\{q:(\w+)\}/g,(_,id)=>fq(id,(R[r].i[id]||0)*p)).replace("{b}",p>1?p+" boîtes":"1 boîte");
+const stepLabel = txt => { const t=txt.split(" : ")[0]; return t.length>22?t.slice(0,21)+"…":t; };
+function buildSession(key){
+  const I=sessionInfo(key); if(!I) return null;
+  const c=I.content(), byR={};
+  c.items.forEach(it=>{ const x=byR[it.r]=byR[it.r]||{r:it.r,p:0,dates:[]}; x.p+=it.p; x.dates.push(...it.dates); });
+  const items=Object.values(byR), steps=[], groups={}, ings={};
+  items.forEach(it=>{
+    Object.entries(R[it.r].i).forEach(([id,q])=>ings[id]=(ings[id]||0)+q*it.p);
+    (STEPS[it.r]||[]).forEach((s,j)=>{
+      if(s.length===1){ const G=GROUPS[s[0]], g=groups[s[0]]=groups[s[0]]||{q:0,rec:[]}; const q=(R[it.r].i[G.ing]||0)*it.p; g.q+=q; g.rec.push(R[it.r].n+" ("+fq(G.ing,q)+")"); return; }
+      steps.push({id:it.r+"-"+j,ph:s[0],txt:fill(s[1],it.r,it.p),min:s[2],rec:R[it.r].n});
+    });
+  });
+  Object.entries(groups).forEach(([k,g])=>{ const G=GROUPS[k]; steps.push({id:"g-"+k,ph:G.ph,txt:G.t.replace("{q}",fq(G.ing,g.q)),min:G.min,rec:g.rec.length>1?"Pour : "+g.rec.join(", "):g.rec[0].replace(/ \(.*\)$/,"")}); });
+  if(c.eggs){ steps.push({id:"oeufs",ph:3,txt:`Œufs durs : ${c.eggs} œufs, 10 min dans l'eau bouillante, puis dans un bol d'eau froide. Garde-les dans leur coquille : 4 jours au frigo.`,min:10,rec:"Collations et salades"}); ings.oeuf=(ings.oeuf||0)+c.eggsC; }
+  // petits-déjeuners et collations : on pèse et on met en pots ou sachets
+  const extra=c.extra||[];
+  extra.forEach(it=>{
+    const r=R[it.r]; Object.entries(r.i).forEach(([id,q])=>ings[id]=(ings[id]||0)+q*it.p);
+    const per=ingLine(it.r);
+    const B0=BC[it.r]||{}, pre=(B0.pre||[]).map(t=>fillBC(t,it.r,it.p)), fin=(B0.fin||B0.jour||[]).map(t=>fillBC(t,it.r,1).replace(/\.$/,""));
+    steps.push({id:"x-"+it.r,ph:7,txt:`${r.c==="B"?"Petit-déj":"Collation"} « ${r.n} » × ${it.p} (${it.dates.map(dShort).join(", ")}) : ${pre.length?pre.join(" "):`prépare ${it.p>1?it.p+" portions":"1 portion"} en pots ou sachets, chacune avec ${per}.`}${fin.length?` Le jour même, il restera : ${fin.map(t=>t.charAt(0).toLowerCase()+t.slice(1)).join(" ; ")}.`:""}`,rec:r.n});
+  });
+  if(c.balls){ const b=c.balls; ["avoine","bc","miel","choco"].forEach(id=>ings[id]=(ings[id]||0)+R.C11.i[id]*b);
+    steps.push({id:"boules",ph:7,txt:`Boules énergétiques : mélange ${fq("avoine",35*b)} de flocons, ${fq("bc",15*b)} de beurre de cacahuète, ${fq("miel",10*b)} de miel et ${fq("choco",10*b)} de chocolat haché. Forme ${b*3} à ${b*4} boules, 30 min au frigo.`,rec:"Collations des gardes"}); }
+  const boxes=items.reduce((a,it)=>a+it.p,0), pots=extra.reduce((a,it)=>a+it.p,0);
+  const oven=steps.some(s=>s.ph===2), water=steps.filter(s=>s.ph===3||s.ph===6).length, pan=steps.some(s=>s.ph===5);
+  const fresh=!!I.fresh;
+  if(fresh) steps.push({id:"servir",ph:8,txt:"C'est prêt : sers ta portion et mange-la tant que c'est chaud. S'il reste un peu de féculents, garde-les au frigo pour le lendemain."});
+  steps.push({id:"prep",ph:1,txt:fresh?`Sors une planche, un couteau${pan?", une poêle":""}${oven?", une plaque de four":""} et les ingrédients de la liste.`:`Sors ${[boxes?boxes+" boîtes hermétiques":"",pots?pots+" pots ou sachets":""].filter(Boolean).join(" et ")||"tes boîtes"}, une planche, un bon couteau${pan?", 2 poêles":""}${oven?", une plaque de four":""} et tous les ingrédients de la liste.`});
+  if(oven) steps.push({id:"four",ph:1,txt:"Préchauffe le four à 200 °C."});
+  if(water) steps.push({id:"eau",ph:1,txt:`Mets ${water>1?"2 grandes casseroles":"une grande casserole"} d'eau salée à chauffer : tu t'en serviras pour les féculents${steps.some(s=>s.ph===6)?" puis les légumes verts":""}.`});
+  const fz=c.freeze||[], fzSet=new Set(fz.map(iso));
+  if(boxes&&!fresh) steps.push({id:"froid",ph:8,txt:"Laisse refroidir 30 min maximum à découvert, puis ferme les boîtes et range-les au frigo (4 jours maximum)."+(fz.length?" Sauf celles de l'étape suivante.":"")});
+  if(fz.length) steps.push({id:"congel",ph:8,txt:`Congélateur : les boîtes du ${fz.map(dShort).join(", ")} (${c.fzBoxes||fz.length*2} boîtes, au-delà de 4 jours de frigo). Elles se gardent 3 mois. La veille au soir, passe-les au frigo : un rappel s'affichera.`});
+  if(boxes&&!fresh) steps.push({id:"jours",ph:8,txt:"Note le jour sur chaque boîte : "+items.map(it=>R[it.r].n+" → "+it.dates.map(d=>dShort(d)+(fzSet.has(iso(d))?" (congel.)":"")).join(", ")).join(" · ")+"."});
+  if(fresh) steps.forEach(s=>{ s.txt=s.txt.replace(/dans 1 boîte/g,"dans ton assiette").replace(/1 boîte/g,"ton assiette"); });
+  steps.sort((a,b)=>a.ph-b.ph);
+  return {items,extra,steps,ings,boxes,pots,c,I};
+}
+// étapes d'une recette pour 1 portion (onglet Recettes)
+function recipeSteps(r){
+  const out=(STEPS[r]||[]).map(s=>{ if(s.length===1){ const G=GROUPS[s[0]]; return {ph:G.ph,txt:G.t.replace("{q}",fq(G.ing,R[r].i[G.ing]||0))}; } return {ph:s[0],txt:fill(s[1],r,1)}; });
+  if(out.some(s=>s.ph===2)) out.push({ph:1,txt:"Préchauffe le four à 200 °C."});
+  return out.sort((a,b)=>a.ph-b.ph);
+}
+const sessionKey = (ws,n) => iso(ws)+"|"+n;
+const sessionDone = key => { if(S.done&&key in S.done) return !!S.done[key]; const B=buildSession(key); if(!B) return false; const d=S.cook[key]||{}; return B.steps.length && B.steps.every(s=>d[s.id]); };
+// « Préparée le … » ou « Boîte 2/3 » pour un déjeuner ou un dîner
+// la session qui prépare ce repas : {key, date} ; null = rien à préparer à l'avance
+function prepOf(m,x){
+  const k=iso(m.date), cv=covers(), c=cv[x.cat][k];
+  if(c) return {key:c.id,date:parse(c.date),custom:c};
+  if(x.cat!=="L"&&x.cat!=="D") return null;
+  if(cv.LD[k]) return {key:"F"+k+"|"+x.cat,date:m.date,fresh:1};
+  const n=m.slot<2?1:2, d=sessionsFor(m.ws)["s"+n]; return d?{key:sessionKey(m.ws,n),date:d}:null;
+}
+function portionTxt(m,x){
+  if(x){ const p=prepOf(m,x); if(!p) return "";
+    if(p.fresh) return x.cat==="D"?"À cuisiner le soir":"À cuisiner le midi";
+    if(sessionDone(p.key)) return (p.custom&&isFrozen(p.custom,iso(m.date))?"Congelée ✓":"Boîte prête ✓");
+    if(iso(p.date)===iso(TODAY)) return "À cuisiner aujourd'hui";
+    return p.date<TODAY ? "Cuisine du "+dShort(p.date)+" pas confirmée" : "Cuisinée "+dShort(p.date); }
+  const k=iso(m.date), cv=covers(), c=x?cv[x.cat][k]:cv.LD[k];
+  if(x && !c && cv.LD[k]) return x.cat==="D"?"À cuisiner le soir":"À cuisiner le midi";
+  if(c) return (isFrozen(c,k)?"Congelée · ":"")+"Préparée "+(c.date===k?"le jour même":"le "+fmt(parse(c.date)));
+  const r=sessionsFor(m.ws)["d"+(m.slot<2?1:2)].filter(i=>SLOT_OF_DAY[i]===m.slot);
+  return "Boîte "+(r.indexOf(m.d)+1)+"/"+r.length;
+}
+
+/* ---------- Rendu ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const qtyTxt = (id,q) => { const u=ING[id][2]; if(u==="pc") return id==="oeuf"?(q>1?q+" œufs":"1 œuf"):q+" galettes"; return SHORT[id]+" "+q+" "+u; };
+const ingLine = r => Object.entries(R[r].i).map(([id,q])=>ING[id][2]==="pc"?qtyTxt(id,q):SHORT[id]+" "+q+" "+ING[id][2]).join(" · ");
+
+const ICONS = {
+  today:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
+  plan:'<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M7.5 14h2M11 14h2M14.5 14h2M7.5 17.5h2M11 17.5h2"/></svg>',
+  week:'<svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>',
+  shop:'<svg viewBox="0 0 24 24"><path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.5L21 8H6.2"/><circle cx="10" cy="20" r="1.3"/><circle cx="17" cy="20" r="1.3"/></svg>',
+  recipes:'<svg viewBox="0 0 24 24"><path d="M4 19V5a2 2 0 0 1 2-2h12v16H6a2 2 0 0 0-2 2 2 2 0 0 0 2 2h12"/><path d="M8 7h6M8 11h6"/></svg>',
+  stock:'<svg viewBox="0 0 24 24"><path d="M5 8h14v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z"/><path d="M4 4h16v4H4zM10 12h4"/></svg>',
+  tickets:'<svg viewBox="0 0 24 24"><path d="M6 3h12v18l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5L6 21z"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>'
+};
+const TABS=[["today","Aujourd'hui"],["week","Semaine"],["shop","Courses"],["recipes","Recettes"]];
+
+function renderTabs(){
+  $("#tabs").innerHTML=TABS.map(([k,l])=>`<button role="tab" aria-selected="${view.tab===k}" data-tab="${k}">${ICONS[k]}<span>${l}</span></button>`).join("");
+}
+function header(title,sub){
+  return `<div class="top"><div class="spread"><span class="eyebrow">Plan alimentaire · Stéphane</span><span class="sync" id="sync">${esc(syncMsg)}</span></div><h1>${title}</h1>${sub?`<p class="muted">${sub}</p>`:""}</div>`;
+}
+function kcalBar(){
+  const parts=[["B",500],["C",250],["L",700],["C",250],["D",850]];
+  return `<div class="stack" style="gap:6px"><div class="spread"><span class="small muted">Objectif du jour</span><b class="num">2 550 kcal</b></div>
+  <div class="kbar">${parts.map(([c,k])=>`<span class="cat-${c} band" style="width:${k/25.5}%"></span>`).join("")}</div>
+  <div class="legend"><span><i class="cat-B band"></i>Petit-déj 500</span><span><i class="cat-C band"></i>Collations 2 × 250</span><span><i class="cat-L band"></i>Déjeuner 700</span><span><i class="cat-D band"></i>Dîner 850</span></div></div>`;
+}
+function mealCard(x,time,m){
+  const r=R[x.r], label=x.lab||CAT[x.cat].n, dk=iso(m.date), sk=skipOf(dk,x.k), sp=spareFor(dk,x.k);
+  const skipBtn = sp ? `<button class="swap" data-spundo="${sp.id}">Annuler</button>` : sk ? `<button class="swap" data-unskip="${dk}|${x.k}">Annuler</button>` : `<button class="swap" data-skip="${dk}|${x.k}">Pas mangé</button>`;
+  const skNote = sp ? `<span class="note">À la place : ta boîte en plus « ${esc(R[sp.r].n)} » (${sp.where==="congel"?"du congélateur, sors-la la veille":"du frigo"}).</span>` : sk ? `<span class="note">Pas mangé · ${esc(WHY[sk.why]||"")}${sk.box==="spare"?" · boîte gardée pour un autre jour":sk.box==="freeze"?" · boîte au congélateur":sk.box==="trash"?" · boîte jetée":sk.box==="pot"?" · le pot reste au frigo":!sk.made||sk.box==="less"?" · pas cuisiné, rien de perdu":""}</span>` : "";
+  const tag = (x.cat==="L"||x.cat==="D") ? portionTxt(m,x) : (x.nomade?"Sans frigo":"");
+  const pk = (x.cat==="L"||x.cat==="D") && !sk && !sp ? prepOf(m,x) : null, needOk = pk && !pk.fresh && !sessionDone(pk.key) && pk.date<=TODAY && m.date>=TODAY;
+  const subNote = x.sub ? `<span class="note">Remplace « ${esc(R[x.sub.from].n)} » : ${esc(x.sub.why)} (onglet Recettes pour changer).</span>` : "";
+  return `<div class="meal cat-${x.cat}"><div class="band"></div><div class="body">
+    <span class="catlabel">${label} <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:500">· ${time}</span></span>
+    <span class="name">${esc(r.n)}</span><span class="ings">${esc(ingLine(x.r))}</span>
+    ${r.f?`<span class="note">${esc(r.f)}</span>`:""}${subNote}${skNote}
+    ${needOk?`<div class="row" style="margin-top:4px"><button class="btn sm" data-sdone="${pk.key}">C'est cuisiné ✓</button><button class="btn sm ghost" data-cook="${pk.key}">Voir les étapes</button></div>`:""}
+    ${(x.cat==="B"||x.cat==="C")&&BC[x.r]?`<details class="how"><summary>Comment faire${bcPrepped(x.r,iso(m.date))?" (préparé à l'avance)":""}</summary><ol>${bcSteps(x.r,iso(m.date)).map(t=>`<li>${esc(t)}</li>`).join("")}</ol></details>`:""}</div>
+    <div class="side"><span class="tag num">${CAT[x.cat].k} kcal</span>${tag?`<span class="tag">${tag}</span>`:""}${x.sub?`<span class="tag">Remplacée</span>`:""}${sp?`<span class="tag">Boîte en plus</span>`:""}${sk?"":`<button class="swap" data-dsw="${dk}|${prefOf(x.k)}|${x.cat}|${x.r}">Changer</button>`}${skipBtn}</div></div>`.replace('<div class="meal ',`<div class="meal ${sk?"skipped ":""}`);
+}
+
+function renderToday(){
+  const before = TODAY < startDate();
+  const date = before ? startDate() : TODAY;
+  const m = mealsFor(date), times = TIMES[m.g||"rest"];
+  const rem = remindersFor(TODAY);
+  const ws=planWeek(date), ses=sessionsFor(ws);
+  // sessions du jour : automatiques et « Je cuisine »
+  const keys=[];
+  [planWeek(TODAY),addDays(planWeek(TODAY),7)].forEach(w=>{ if(w<startDate()) return; const s=sessionsFor(w); [1,2].forEach(n=>{ if(s["s"+n] && iso(s["s"+n])===iso(TODAY)) keys.push(sessionKey(w,n)); }); });
+  customs().forEach(c=>{ if(c.date===iso(TODAY)) keys.push(c.id); });
+  Object.keys(freshOf()).sort((a,b)=>a.slice(-1)<b.slice(-1)?1:-1).forEach(f=>{ if(f.startsWith(iso(TODAY))) keys.push("F"+f); });
+  // sessions passées que tu n'as pas confirmées : l'appli ne suppose rien, elle te demande
+  const pend=[];
+  [addDays(planWeek(TODAY),-7),planWeek(TODAY),addDays(planWeek(TODAY),7)].forEach(w=>{ if(w<startDate()) return; const s=sessionsFor(w); [1,2].forEach(n=>{ const d=s["s"+n]; if(d&&d<TODAY&&d>=addDays(TODAY,-6)) pend.push(sessionKey(w,n)); }); });
+  customs().forEach(c=>{ const d=parse(c.date); if(d<TODAY&&d>=addDays(TODAY,-6)) pend.push(c.id); });
+  let sessionNote=pend.filter(k=>!(S.done&&k in S.done)&&!sessionDone(k)).map(key=>{ const B=buildSession(key); if(!B||!(B.items.length+B.extra.length)) return "";
+    return `<div class="session warn"><b>${B.I.title} du ${fmtLong(B.I.date)} : tu l'as faite ?</b><p class="small" style="margin-top:4px">${[...B.items,...B.extra].map(it=>esc(R[it.r].n)+" ×"+it.p).join(" · ")}</p>
+      <div class="row" style="margin-top:8px"><button class="btn primary sm" data-sdone="${key}">Oui, c'est cuisiné ✓</button><button class="btn sm" data-snot="${key}">Non, pas faite</button></div></div>`; }).join("");
+  sessionNote+=keys.map(key=>{ const B=buildSession(key), done=sessionDone(key);
+    return `<div class="session"><div class="spread"><b>${B.I.title}${done?" · faite ✓":" · aujourd'hui"}</b><button class="btn ${done?"sm":"primary sm"}" data-cook="${key}">${done?"Revoir":"Lancer la session guidée"}</button></div><p class="small muted" style="margin-top:4px">${esc(B.I.range)} · ${[...B.items,...B.extra].map(it=>esc(R[it.r].n)+" ×"+it.p).join(" · ")}</p>
+      <div class="row" style="margin-top:8px">${done?`<button class="btn sm ghost" data-sdone="${key}">Annuler « cuisiné »</button>`:`<button class="btn sm" data-sdone="${key}">C'est cuisiné ✓</button>`}</div></div>`; }).join("");
+  sessionNote+=jcCard();
+  const h = S.habits[iso(TODAY)]||{};
+  const tip = ALT[(TODAY.getDate())%ALT.length];
+  let html = header(before?"Aperçu du jour 1":"Aujourd'hui", before?`Ton plan démarre ${fmtLong(startDate())}`:`${fmtLong(date).replace(/^./,c=>c.toUpperCase())} · menu ${m.w+1}/4`);
+  if(before) html+=`<div class="banner"><b>Avant de commencer</b><span>${(()=>{ const s=sessionsFor(startDate()), done=s.drive&&s.drive<TODAY, today=s.s1&&iso(s.s1)===iso(TODAY);
+    return "1. Vérifie tes gardes dans l'onglet Planning : les sessions se placent autour."+(done?"<br>2. Les courses sont faites.":"<br>2. Commande ton drive avec la liste de l'onglet Courses"+(s.drive?", à récupérer "+fmtLong(s.drive):"")+".")
+      +"<br>3. "+(today?"Aujourd'hui : ta première session cuisine, avec le bouton ci-dessous. Tu mangeras les boîtes à partir de demain.":"Fais ta première session cuisine "+(s.s1?fmtLong(s.s1):"dès que tu as un jour libre")+"."); })()}</span><div class="row"><button class="btn primary sm" data-go="plan">Mes gardes</button><button class="btn sm" data-go="shop">Liste de courses</button></div></div>`;
+  if(rem.length) html+=`<div class="remind" style="margin-top:14px"><b>À penser</b><ul>${rem.map(r=>`<li>${esc(r)}</li>`).join("")}</ul></div>`;
+  html+=`<div class="stack" style="margin-top:14px"><div class="spread"><div class="row"><span class="chip ${m.g?"guard":"ok"}">${m.g?GT[m.g].n:"Jour de repos"}</span></div>
+    ${guardBtn(date,m.g)}</div>
+    ${sessionNote}
+    <div class="card">${kcalBar()}${(()=>{ const sk=m.list.filter(x=>skipOf(iso(m.date),x.k)); if(!sk.length) return ""; const miss=sk.reduce((a,x)=>a+CAT[x.cat].k,0);
+      return `<p class="small" style="margin-top:8px">${sk.length} repas pas mangé${sk.length>1?"s":""} : ta journée fait ≈ <b>${(2550-miss).toLocaleString("fr-FR")} kcal</b> sur 2 550.</p>`; })()}</div>
+    ${spareBlock()}
+    <details class="tk" style="margin-top:16px"><summary><b>Mes données</b><span class="small muted">sauvegarder ou transférer</span></summary><div class="in">
+      <p class="small muted">Tes repas choisis, gardes, sessions et courses. Sauvegarde-les pour les garder en sécurité ou les mettre sur un autre appareil ou sur ton site.</p>
+      <div class="row" style="margin-top:8px"><button class="btn sm primary" data-dataexp="1">Sauvegarder mes données</button><button class="btn sm" data-dataimp="1">Restaurer</button></div>
+      <p class="small muted" id="dataMsg" style="margin-top:6px"></p></div></details>
+    ${m.list.map((x,i)=>mealCard(x,times[i],m)).join("")}
+    ${m.away?`<p class="small muted">Jour de garde : les collations passent en version sans frigo (galettes de riz, boules énergétiques, pomme-amandes) pour pouvoir manger vite entre deux interventions.</p>`:""}
+    ${m.g==="N"?`<p class="small muted">Garde de nuit : mange bien avant de partir, prends ta boîte du dîner. En rentrant le matin, un petit-déj léger puis dodo.</p>`:""}
+    ${m.g==="A"?`<p class="small muted">Astreinte : repas normaux à la maison, mais garde une collation sans frigo prête au cas où tu pars.</p>`:""}
+  </div>`;
+  if(!before){
+    html+=`<div class="card" style="margin-top:16px"><div class="spread"><h2>Mes habitudes</h2><span class="small muted">${fmt(TODAY)}</span></div>
+    <div class="habit"><div><b>Sommeil de 7 h ou plus</b><p class="small muted">Écrans coupés 30 à 60 min avant de dormir</p></div><button class="switch" role="switch" aria-checked="${!!h.s}" aria-label="Sommeil de 7 heures ou plus" data-habit="s"></button></div>
+    <div class="habit" style="flex-direction:column;align-items:stretch"><div class="spread"><b>Eau</b><span class="small muted num">${((h.w||0)*0.25).toLocaleString("fr-FR")} L / 2 L</span></div>
+      <div class="glasses">${Array.from({length:8},(_,i)=>`<button class="glass ${i<(h.w||0)?"on":""}" data-water="${i+1}" aria-label="${i+1} verre${i?"s":""}"></button>`).join("")}</div></div>
+    <div class="habit"><div><b>Soirée sans alcool</b><p class="small muted">Idée du jour : ${esc(tip)}</p></div><button class="switch" role="switch" aria-checked="${!!h.a}" aria-label="Soirée sans alcool" data-habit="a"></button></div>
+    <div style="margin-top:10px"><span class="eyebrow">14 derniers jours</span><div class="history">${Array.from({length:14},(_,i)=>{const d=addDays(TODAY,i-13),x=S.habits[iso(d)]||{};return `<div><b class="s ${x.s?"on":""}"></b><b class="w ${(x.w||0)>=8?"on":""}"></b><b class="a ${x.a?"on":""}"></b>${d.getDate()}</div>`;}).join("")}</div>
+    <div class="legend" style="margin-top:6px"><span><i style="background:var(--c-d)"></i>Sommeil</span><span><i style="background:var(--c-c)"></i>2 L d'eau</span><span><i style="background:var(--ok)"></i>Sans alcool</span></div></div></div>`;
+  }
+  return html;
+}
+
+function guardBtn(date,g){
+  return `<button class="toggle-guard" aria-pressed="${!!g}" ${g?`data-gt="${g}"`:""} data-guard="${iso(date)}" aria-label="Type de garde, touche pour changer">${g?GT[g].s+" ✓":"Garde ?"}</button>`;
+}
+
+function renderPlan(){
+  const mo=view.month, y=mo.getFullYear(), mi=mo.getMonth();
+  const first=new Date(y,mi,1), gridStart=monday(first), last=new Date(y,mi+1,0);
+  const weeks=Math.ceil((Math.round((last-gridStart)/864e5)+1)/7);
+  const MN=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
+  let count={J:0,N:0,G:0,A:0};
+  for(let d=1; d<=last.getDate(); d++){ const t=gType(new Date(y,mi,d)); if(t) count[t]++; }
+  let html=`<div style="margin:6px 0 -6px"><button class="btn sm" data-go="week">‹ Ma semaine</button></div>`+header("Calendrier des gardes",`Choisis un type de garde, puis touche tes jours. Les sessions cuisine et le drive se placent tout seuls.`);
+  html+=`<div class="paint" role="group" aria-label="Type à poser">${[...GT_ORDER,"X"].map(t=>`<button data-paint="${t}" aria-pressed="${view.paint===t}">${t==="X"?"Effacer":`<i class="gt-${t}"></i>${GT[t].n}`}</button>`).join("")}</div>`;
+  html+=`<div class="weeknav" style="margin-top:14px"><button class="btn sm" data-mo="-1" aria-label="Mois précédent">‹</button><div class="mid"><b>${MN[mi]} ${y}</b><div class="small muted">${GT_ORDER.filter(t=>count[t]).map(t=>count[t]+" "+({J:["garde de jour","gardes de jour"],N:["nuit","nuits"],G:["garde 24 h","gardes 24 h"],A:["astreinte","astreintes"]})[t][count[t]>1?1:0]).join(" · ")||"aucune garde"}</div></div><button class="btn sm" data-mo="1" aria-label="Mois suivant">›</button></div>`;
+  html+=`<div class="cal">${["L","M","M","J","V","S","D"].map(d=>`<div class="dow">${d}</div>`).join("")}`;
+  for(let i=0;i<weeks*7;i++){
+    const d=addDays(gridStart,i), ev=eventsOn(d), out=d.getMonth()!==mi;
+    const cook=ev.tasks.find(x=>x.t==="cook"), drv=ev.tasks.find(x=>x.t==="drive");
+    html+=`<button class="cell ${out?"out":""} ${iso(d)===iso(TODAY)?"today":""}" data-day="${iso(d)}" aria-label="${fmtLong(d)}${ev.g?", "+GT[ev.g].n:""}${cook?", session cuisine":""}${drv?", drive":""}">
+      <span class="dn num">${d.getDate()}</span>${ev.g?`<span class="gt gt-${ev.g}">${GT[ev.g].s}</span>`:""}${cook?`<span class="mk cook">Cuisine${cook.n?" "+cook.n:""}</span>`:""}${drv?`<span class="mk drive">Drive</span>`:""}</button>`;
+  }
+  html+=`</div><div class="legend" style="margin-top:8px"><span><i style="background:var(--ok)"></i>Session cuisine</span><span><i style="background:var(--c-c)"></i>Récupérer le drive</span></div>`;
+  // agenda des 14 prochains jours
+  const from = TODAY<startDate()? addDays(startDate(),-3) : TODAY;
+  let ag="";
+  for(let i=0;i<14;i++){
+    const d=addDays(from,i), ev=eventsOn(d), lines=[];
+    if(ev.g) lines.push(`<b>${GT[ev.g].n}</b>`);
+    ev.tasks.forEach(x=>lines.push(esc(taskText(x))));
+    if(lines.length) ag+=`<div class="ag"><span class="${iso(d)===iso(TODAY)?"":"muted"}"><b>${DAYS[(d.getDay()+6)%7].slice(0,3)}. ${fmt(d)}</b></span><ul>${lines.map(l=>`<li>${l}</li>`).join("")}</ul></div>`;
+  }
+  html+=`<div class="card" style="margin-top:16px"><h2 style="margin-bottom:6px">Les 2 prochaines semaines</h2><div class="agenda">${ag||`<p class="muted small">Rien de prévu.</p>`}</div></div>`;
+  html+=`<div class="card" style="margin-top:12px"><h3>Comment c'est organisé</h3><ul class="small" style="margin:6px 0 0;padding-left:18px">
+    <li><b>Session 1</b> le ${dayOf(startDate(),-1).toLowerCase()} ou le ${dayOf(startDate(),0).toLowerCase()}, <b>session 2</b> le ${dayOf(startDate(),3).toLowerCase()} ou le ${dayOf(startDate(),2).toLowerCase()} : le jour le plus libre est choisi.</li>
+    <li>Un jour de garde de jour ou de 24 h n'est jamais choisi. Une astreinte ou un lendemain de nuit passe avant un jour de nuit ou un lendemain de 24 h.</li>
+    <li><b>Drive</b> la veille de la session 1 (ou le matin même), commande passée la veille. La viande de la session 2 va au congélateur en rentrant.</li>
+    <li><b>Je cuisine</b> (Accueil ou Semaine) : tu choisis toi-même les jours à préparer, pour aujourd'hui, demain ou plusieurs jours. Les sessions prévues se raccourcissent d'autant, ou disparaissent. Les boîtes à plus de 4 jours vont au congélateur, avec un rappel la veille.</li>
+    <li>Les rappels apparaissent dans l'onglet Aujourd'hui, la veille de chaque garde, session ou drive.</li></ul></div>`;
+  return html;
+}
+
+function renderWeek(){
+  const ws=view.week, w=weekIndex(ws), ses=sessionsFor(ws);
+  let html=header("Ma semaine",`Touche un repas pour le changer : tu choisis le plat et les jours. Un même plat sur plusieurs jours est cuisiné en une seule fois.`);
+  html+=`<div class="weeknav"><button class="btn sm" data-wk="-1" aria-label="Semaine précédente">‹ Préc.</button><div class="mid"><b>Semaine du ${fmt(ws)}</b><div class="small muted">Menu ${w+1} sur 4</div></div><button class="btn sm" data-wk="1" aria-label="Semaine suivante">Suiv. ›</button></div>`;
+  html+=`<div class="stack">`;
+  html+=`<div class="row" style="margin-bottom:10px"><button class="btn primary sm" data-jc="1">Je cuisine…</button><button class="btn sm" data-go="plan">Calendrier des gardes</button></div>`;
+  { const sk=Object.entries(S.skip||{}).filter(([k])=>{ const d=k.split("|")[0]; return d>=iso(ws)&&d<=iso(addDays(ws,6)); });
+    if(sk.length){ const by={}; sk.forEach(([,v])=>by[v.why]=(by[v.why]||0)+1); const kc=sk.reduce((a,[k])=>a+CAT[catOfKey(k.split("|")[1])].k,0);
+      html+=`<div class="card" style="margin-bottom:12px"><b>${sk.length} repas pas mangé${sk.length>1?"s":""} cette semaine</b><p class="small muted">${Object.entries(by).map(([w,n])=>esc(WHY[w]||w)+" : "+n).join(" · ")} · ≈ ${kc.toLocaleString("fr-FR")} kcal en moins</p>
+        <ul class="small" style="margin:6px 0 0;padding-left:18px">${sk.sort().map(([k,v])=>{ const [d,kk]=k.split("|"), x=mealsFor(parse(d)).list.find(y=>y.k===kk); return `<li>${dShort(parse(d))} · ${x?esc(x.lab||CAT[x.cat].n):""} : ${x?esc(R[x.r].n):""}</li>`; }).join("")}</ul></div>`; } }
+  const warn=n=>`<div class="session warn"><b>Session cuisine ${n} : pas de jour de repos disponible.</b><p class="small">Cuisine la veille au soir en rentrant de garde, utilise « Je cuisine » un autre jour, ou échange une recette contre une plus rapide (salade de riz au thon, wraps).</p></div>`;
+  const sessBlock=key=>{
+    const I=sessionInfo(key), c=I.content(), done=sessionDone(key);
+    return `<div class="session"><div class="spread"><b>${I.title} · ${fmtLong(I.date)}${done?" ✓":""}</b><button class="btn sm ${done?"":"primary"}" data-cook="${key}">${done?"Revoir les étapes":"Mode guidé"}</button></div><span class="small muted">${esc(I.range)}${done?" · cuisinée ✓":""}</span>
+      ${I.date<=TODAY?`<div class="row" style="margin-top:6px">${done?`<button class="btn sm ghost" data-sdone="${key}">Annuler « cuisiné »</button>`:`<button class="btn sm" data-sdone="${key}">C'est cuisiné ✓</button>`}</div>`:""}
+      <ul>${[...c.items,...c.extra].map(it=>`<li><b>${esc(R[it.r].n)}</b> × ${it.p} portion${it.p>1?"s":""} <span class="muted small">(${it.dates.map(dShort).join(", ")})</span>${R[it.r].f?` <span class="note">${esc(R[it.r].f)}</span>`:""}</li>`).join("")}
+      ${c.eggs?`<li>Œufs durs : ${c.eggs}</li>`:""}${c.balls?`<li>Boules énergétiques : ${c.balls} portion${c.balls>1?"s":""} (pour les gardes)</li>`:""}</ul>
+      <p class="small muted" style="margin-top:6px">${c.freeze.length?`Les boîtes du ${c.freeze.map(dShort).join(", ")} vont au congélateur. Les autres : 4 jours maximum au frigo.`:"Laisse refroidir puis ferme les boîtes : 4 jours maximum au frigo."}</p></div>`;
+  };
+  const cust=d=>customs().filter(c=>c.date===iso(d)).map(c=>sessBlock(c.id)).join("");
+  html+=cust(addDays(ws,-1));
+  if(ses.s1 && iso(ses.s1)===iso(addDays(ws,-1))) html+=sessBlock(sessionKey(ws,1));
+  if(!ses.s1 && !ses.gone1) html+=warn(1);
+  for(let d=0; d<7; d++){
+    const date=addDays(ws,d), m=mealsFor(date), today=iso(date)===iso(TODAY);
+    html+=cust(date);
+    if(ses.s1 && iso(ses.s1)===iso(date)) html+=sessBlock(sessionKey(ws,1));
+    if(d===4 && !ses.s2 && !ses.gone2) html+=warn(2);
+    html+=`<div class="day ${today?"today":""} ${m.g?"isguard":""}"><div class="spread"><b>${dayOf(ws,d)} ${fmt(date)}${today?' <span class="chip ok">Aujourd\'hui</span>':""}</b>
+      ${guardBtn(date,m.g)}</div>
+      ${m.list.map(x=>`<div class="dayline cat-${x.cat}"><span class="k">${x.cat==="C"?(x.k.startsWith("CM")?"Coll. matin":"Coll. aprèm"):CAT[x.cat].n}</span><span><button class="link" data-dsw="${iso(m.date)}|${prefOf(x.k)}|${x.cat}|${x.r}" ${skipOf(iso(m.date),x.k)?'style="text-decoration:line-through"':""}>${esc(R[x.r].n)} ▾</button>${S.dp&&S.dp[iso(m.date)]&&S.dp[iso(m.date)][prefOf(x.k)]?` <span class="small muted">· ton choix</span>`:""}${(()=>{ const dk=iso(m.date), sk=skipOf(dk,x.k), sp=spareFor(dk,x.k);
+        return sp?` <span class="small muted">· boîte en plus : ${esc(R[sp.r].n)}</span><button class="mini" data-spundo="${sp.id}">Annuler</button>`:sk?` <span class="small muted">· pas mangé (${esc((WHY[sk.why]||"").toLowerCase())})</span><button class="mini" data-unskip="${dk}|${x.k}">Annuler</button>`:`<button class="mini" data-skip="${dk}|${x.k}" aria-label="Pas mangé : ${esc(R[x.r].n)}">Pas mangé</button>`; })()}${(x.cat==="L"||x.cat==="D")?` <span class="small muted">· ${portionTxt(m,x)}</span>`:""}${x.sub?` <span class="small muted">· remplacée (${esc(x.sub.why)})</span>`:x.miss&&x.miss.length?` <span class="small muted">· pas au placard : ${esc(ingNames(x.miss))}</span>`:""}</span></div>`).join("")}
+    </div>`;
+    if(ses.s2 && iso(ses.s2)===iso(date)) html+=sessBlock(sessionKey(ws,2));
+  }
+  html+=`</div><div class="card" style="margin-top:16px"><div class="spread"><div><b>Début du programme</b><p class="small muted">La rotation des 4 menus part de ce jour, et chaque semaine commence ce jour-là.</p></div><input type="date" id="startDate" value="${S.start}"></div></div>`;
+  return html;
+}
+
+/* ---------- Courses v11 : tu coches ce que tu as, pas de calcul de stock ---------- */
+// tout ce que demandent les repas de la semaine (sauf ceux pas mangés et pas cuisinés)
+function weekNeeds(ws){
+  const need={};
+  for(let i=0;i<7;i++){ const day=addDays(ws,i); if(day<startDate()) continue; mealsFor(day).list.forEach(x=>{ if(notCooked(iso(day),x.k)) return; Object.entries(R[x.r].i).forEach(([id,q])=>need[id]=(need[id]||0)+q); }); }
+  return need;
+}
+// j'en ai déjà ? ce que tu as coché ; sinon, pour les produits qui durent (riz, huile, miel…), oui si tu les as eus ces dernières semaines
+function hasIt(ws,id){
+  const H=S.have&&S.have[iso(ws)]; if(H&&id in H) return !!H[id];
+  if(!ING[id][4]) return false;
+  for(let i=1;i<=4;i++){ const P=S.have&&S.have[iso(addDays(ws,-7*i))]; if(P&&id in P) return true; }
+  return OWNED.includes(id);
+}
+// unité du compteur « J'en ai » : pièces (bananes, œufs…) ou paquets (riz, skyr, poulet…)
+function cntUnit(id){
+  const f=fmts(id)[0];
+  if(f.pw) return {size:f.pw,t:n=>n+" "+(n>1?f.w[1]:f.w[0])};
+  if(ING[id][2]==="pc") return {size:1,t:n=>fq(id,n)};
+  const a=fmts(id).reduce((m,x)=>x.s<m.s?x:m);
+  return {size:a.s,t:n=>n+" × "+a.l};
+}
+const cntOf = (ws,id) => { const C=S.cnt&&S.cnt[iso(ws)]; return C&&id in C ? C[id] : null; };
+function shopList(ws){
+  return Object.entries(weekNeeds(ws)).map(([id,q])=>{
+    const n=cntOf(ws,id), u=cntUnit(id);
+    let have, rest=q;
+    if(n!==null){ rest=Math.max(0,q-n*u.size); have=rest<=1e-9; }
+    else have=hasIt(ws,id);
+    const p=packs(id,have?q:rest);
+    return {id,name:ING[id][0],aisle:ING[id][1],q,need:fmts(id)[0].pw?u.t(Math.ceil(q/u.size-1e-9)):fq(id,q),label:p.label,price:p.price,have,keep:!!ING[id][4],n,u,part:n!==null&&n>0&&!have};
+  });
+}
+function renderShop(){
+  const ws=view.week, key=iso(ws), list=shopList(ws), buy=list.filter(x=>!x.have), have=list.filter(x=>x.have);
+  const total=buy.reduce((a,x)=>a+x.price,0);
+  let html=header("Liste de courses",`Tout ce qu'il faut pour tes repas du ${fmt(ws)} au ${fmt(addDays(ws,6))} (onglet Semaine). Avec « − + », dis combien tu en as déjà : l'appli n'achète que ce qui manque.`);
+  html+=`<div class="weeknav"><button class="btn sm" data-wk="-1">‹ Préc.</button><div class="mid"><b>Semaine du ${fmt(ws)}</b><div class="small muted">${(()=>{ const d=sessionsFor(ws).drive; return d?"Drive "+fmtLong(d):""; })()}</div></div><button class="btn sm" data-wk="1">Suiv. ›</button></div>`;
+  html+=`<div class="shopsum"><div class="card"><span class="eyebrow">À acheter</span><div class="big num">≈ ${Math.round(total)} €</div><span class="small muted">${buy.length} article${buy.length>1?"s":""}</span></div>
+    <div class="card"><span class="eyebrow">Déjà chez moi</span><div class="big num">${have.length}</div><span class="small muted">article${have.length>1?"s":""} coché${have.length>1?"s":""}</span></div></div>`;
+  html+=`<div class="row" style="margin:12px 0"><button class="btn primary sm" id="copyList">Copier la liste</button><span class="small muted" id="copyMsg"></span></div>`;
+  const row=(x,on)=>{ const n=x.n||0;
+    return `<div class="item ${on?"done":""}" style="display:block"><div class="spread"><span><span class="q">${esc(x.name)}</span>${on?"":` · à acheter : <b>${esc(x.label)}</b>`}</span><span class="price num">${on?"":"≈ "+euro(x.price)}</span></div>
+    <span class="small muted">Pour la semaine : ${esc(x.need)}</span>
+    <div class="row" style="margin-top:6px;align-items:center;gap:6px"><span class="small">J'en ai :</span>
+      <button class="btn sm" data-cnt="${x.id}|-1" ${n<=0?"disabled":""} aria-label="Un de moins">−</button><b class="num" style="min-width:5.5em;text-align:center">${x.n===null&&on?"assez":esc(x.u.t(n))}</b><button class="btn sm" data-cnt="${x.id}|1" aria-label="Un de plus">+</button>
+      ${on?`<button class="btn sm ghost" data-have="${x.id}">Plus rien</button>`:`<button class="btn sm ghost" data-have="${x.id}">J'ai tout</button>`}</div></div>`; };
+  if(!buy.length) html+=`<div class="banner"><b>Rien à acheter.</b><span>Tu as tout coché comme déjà chez toi.</span></div>`;
+  else { const groups={}; buy.forEach(x=>(groups[x.aisle]=groups[x.aisle]||[]).push(x));
+    html+=`<div class="card">${Object.keys(AISLES).filter(g=>groups[g]).map(g=>`<div class="aisle"><h3>${AISLES[g]}</h3>${groups[g].sort((a,b)=>a.name.localeCompare(b.name,"fr")).map(x=>row(x,false)).join("")}</div>`).join("")}</div>`; }
+  if(have.length) html+=`<details class="tk" style="margin-top:12px" open><summary><b>Déjà chez moi (${have.length})</b><span class="small muted">Plus assez ? Touche « Plus assez »</span></summary><div class="in">${have.sort((a,b)=>a.name.localeCompare(b.name,"fr")).map(x=>row(x,true)).join("")}</div></details>`;
+  html+=`<div class="card" style="margin-top:12px"><b>Remplir mon panier drive</b><p class="small muted">Leclerc ou Intermarché : demande à Claude dans la conversation, il met cette liste dans ton panier depuis ton Chrome. Tu vérifies et tu paies toi-même.</p></div>`;
+  html+=`<div class="row" style="margin-top:12px"><button class="btn sm ghost" data-go="tickets">Mes tickets (prix)</button><button class="btn sm ghost" data-go="recipes">Aliments que je n'aime pas</button></div>`;
+  html+=`<p class="small muted" style="margin-top:10px">Prix indicatifs (ou ceux de tes tickets). Pense aussi aux épices, au sel, au poivre et au citron.</p>`;
+  return html;
+}
+function renderShopOld(){
+  const ws=view.week, list=shoppingFor(ws), key=iso(ws), checked=S.shop[key]||{};
+  const buy=list.filter(x=>x.rest>0), have=list.filter(x=>x.rest<=0);
+  const total=buy.reduce((a,x)=>a+x.price,0), saved=list.reduce((a,x)=>a+x.saved,0);
+  const done=buy.filter(x=>checked[x.id]).length;
+  let html=header("Liste de courses",`Pour 7 jours, triée par rayon. Ce qui est déjà dans ton placard est retiré de la liste.`);
+  const bans=Object.keys(S.ban||{});
+  if(bans.length) html+=`<p class="small muted" style="margin:-4px 0 10px">Tu n'achètes pas : ${esc(ingNames(bans))}. Les recettes qui en ont sont remplacées (onglet Placard pour changer).</p>`;
+  html+=`<div class="weeknav"><button class="btn sm" data-wk="-1">‹ Préc.</button><div class="mid"><b>Semaine du ${fmt(ws)}</b><div class="small muted">Menu ${weekIndex(ws)+1} sur 4</div></div><button class="btn sm" data-wk="1">Suiv. ›</button></div>`;
+  if(ws>=planWeek(TODAY)) html+= S.picks&&S.picks[key]
+    ? `<div class="banner" style="margin-bottom:12px"><b>Menu choisi par toi ✓</b><span>La liste ci-dessous suit tes choix.</span><div class="row"><button class="btn sm" data-mp="${key}">Modifier mes repas</button></div></div>`
+    : `<div class="banner" style="margin-bottom:12px"><b>Choisis tes repas de la semaine</b><span>Comme un catalogue : prends les recettes du PDF qui te font envie, la liste de courses se fait toute seule. Sans choix, c'est le menu du coach.</span><div class="row"><button class="btn primary sm" data-mp="${key}">Choisir mes repas</button></div></div>`;
+  html+=`<div class="shopsum"><div class="card"><span class="eyebrow">À acheter</span><div class="big num">≈ ${Math.round(total)} €</div><span class="small muted">${buy.length} article${buy.length>1?"s":""}${Object.keys(S.up||{}).length?" · prix de tes tickets":""}</span></div>
+    <div class="card"><span class="eyebrow">Pris dans le placard</span><div class="big num">≈ ${Math.round(saved)} €</div><span class="small muted">${have.length} article${have.length>1?"s":""} déjà chez toi</span></div>
+    <div class="card"><span class="eyebrow">Dans le panier</span><div class="big num">${done}/${buy.length}</div><span class="small muted">articles cochés</span></div></div>`;
+  if(!buy.length){
+    html+=`<div class="banner" style="margin-top:12px"><b>Rien à acheter pour cette semaine.</b><span>Tout ce qu'il faut est déjà dans ton placard.</span></div>`;
+  } else {
+    html+=`<div class="row" style="margin:12px 0"><button class="btn primary sm" id="copyList">Copier la liste</button><button class="btn sm" id="hideDone">${view.hideDone?"Afficher tout":"Masquer les cochés"}</button><button class="btn sm ghost" id="resetShop">Tout décocher</button><span class="small muted" id="copyMsg"></span></div>`;
+    const groups={}; buy.forEach(x=>(groups[x.aisle]=groups[x.aisle]||[]).push(x));
+    html+=`<div class="card">`;
+    Object.keys(AISLES).forEach(g=>{
+      if(!groups[g]) return;
+      const items=groups[g].sort((a,b)=>a.name.localeCompare(b.name,"fr")).filter(x=>!(view.hideDone&&checked[x.id]));
+      if(!items.length) return;
+      html+=`<div class="aisle"><h3>${AISLES[g]}</h3>${items.map(x=>`<div class="item ${checked[x.id]?"done":""}"><input type="checkbox" id="it-${x.id}" data-item="${x.id}" ${checked[x.id]?"checked":""}><label for="it-${x.id}"><span class="q">${esc(x.name)}</span> · ${esc(x.label)}<br><span class="small muted">Besoin : ${esc(x.need)}${x.have>0?" · tu en as déjà "+esc(x.haveTxt):""}</span></label><button class="btn sm ghost" data-ban="${x.id}" aria-label="Je n'achète pas : ${esc(x.name)}">Je n'en prends pas</button><span class="price num">≈ ${euro(x.price)}</span></div>`).join("")}</div>`;
+    });
+    html+=`</div>`;
+    if(done) html+=`<div class="banner" style="margin-top:12px"><span>Pas de ticket ? Ajoute directement les ${done} article${done>1?"s":""} coché${done>1?"s":""} à ton placard. Si tu prends ton ticket en photo, pas besoin.</span><div class="row"><button class="btn primary sm" id="shopToStock">Ajouter les cochés au placard</button></div></div>`;
+  }
+  if(have.length) html+=`<details class="tk" style="margin-top:12px"><summary><b>Déjà chez toi (${have.length})</b><span class="small muted">Voir</span></summary><div class="in">${have.sort((a,b)=>a.name.localeCompare(b.name,"fr")).map(x=>`<div class="spread"><span>${esc(x.name)}<br><span class="small muted">Besoin : ${esc(x.need)} · ${x.unknown?"au placard, quantité non suivie":"tu en auras "+esc(x.haveTxt)}</span></span>${x.unknown?`<button class="btn sm" data-invzero="${x.id}">Il n'y en a plus</button>`:""}</div>`).join("")}</div></details>`;
+  html+=`<p class="small muted" style="margin-top:10px">Prix indicatifs : ils deviennent ceux de tes tickets dès que tu en enregistres un. Pense aussi aux épices (curry, cumin, paprika, herbes de Provence, ras el hanout), au sel, au poivre et au citron.</p>`;
+  return html;
+}
+
+/* ---------- Placard ---------- */
+function renderStock(){
+  const {s,short}=stockAt(TODAY), fut=consumption(addDays(TODAY,1),addDays(TODAY,21));
+  const until=id=>{ let cum=0; for(let i=1;i<=21;i++){ const o=fut[iso(addDays(TODAY,i))]; cum+=(o&&o[id])||0; if(cum>s[id]+0.5) return addDays(TODAY,i); } return cum>0?"ok":"unused"; };
+  const rows=Object.keys(s).filter(id=>s[id]===null||s[id]>0.5).map(id=>({id,q:s[id],u:s[id]===null?"unk":until(id)}));
+  const value=rows.reduce((a,r)=>a+(r.q||0)*UP(r.id),0);
+  const soon=rows.filter(r=>r.u instanceof Date && (r.u-TODAY)/864e5<=7).sort((a,b)=>a.u-b.u);
+  const lvl=r=> r.u==="unk"?`<span class="lvl">quantité non suivie</span>`:r.u==="unused"?`<span class="lvl">pas prévu au menu des 3 prochaines semaines</span>`:r.u==="ok"?`<span class="lvl ok">assez pour 3 semaines</span>`:`<span class="lvl ${(r.u-TODAY)/864e5<=3?"warn":""}">fini ${(r.u-TODAY)/864e5<=1?"demain":fmtLong(r.u)}</span>`;
+  let html=header("Mon placard","Mis à jour tout seul : tes tickets ajoutent, les sessions cuisine et les repas du jour retirent (sauf ceux que tu n'as pas mangés). Touche un article pour corriger.");
+  html+=spareBlock();
+  html+=`<div class="shopsum"><div class="card"><span class="eyebrow">Articles</span><div class="big num">${rows.length}</div><span class="small muted">en stock ce soir</span></div><div class="card"><span class="eyebrow">Valeur</span><div class="big num">≈ ${Math.round(value)} €</div><span class="small muted">hors articles non suivis</span></div></div>`;
+  html+=`<div class="row" style="margin:12px 0"><button class="btn primary sm" data-invadd="1">Ajouter un article</button><button class="btn sm" data-go="tickets">Scanner un ticket</button></div>`;
+  const miss=Object.keys(short).filter(id=>!(s[id]>0.5));
+  if(miss.length) html+=`<div class="remind" style="border-left-color:var(--guard);background:var(--guard-soft)"><b>Il a peut-être manqué</b><span>${miss.map(id=>esc(SHORT[id])).join(", ")}. Si tu en as encore, corrige la quantité ici.</span></div>`;
+  if(soon.length) html+=`<div class="remind" style="margin-top:10px"><b>Bientôt fini</b><ul>${soon.map(r=>`<li>${esc(ING[r.id][0])} : ${(r.u-TODAY)/864e5<=1?"demain":fmtLong(r.u)}</li>`).join("")}</ul><span class="small muted">Ils seront dans la liste de courses de la bonne semaine.</span></div>`;
+  const bans=Object.keys(S.ban||{});
+  html+=`<div class="card" style="margin-top:12px"><b>Je n'en achète pas</b><p class="small muted">Les recettes qui en contiennent sont remplacées par une autre recette de ton plan (même catégorie, mêmes kcal), et ils ne sont plus dans la liste de courses.</p>
+    ${bans.length?`<div class="row" style="margin-top:8px">${bans.map(id=>`<button class="chip" data-unban="${id}" aria-label="Remettre ${esc(ING[id][0])}">${esc(ING[id][0])} · remettre</button>`).join("")}</div>`:`<p class="small muted">Liste vide.</p>`}
+    <div class="row" style="margin-top:8px"><button class="btn sm" data-banadd="1">Ajouter un aliment</button></div></div>`;
+  const groups={}; rows.forEach(r=>(groups[ING[r.id][1]]=groups[ING[r.id][1]]||[]).push(r));
+  html+=`<div class="card" style="margin-top:12px">`;
+  if(!rows.length) html+=`<p class="muted">Ton placard est vide. Scanne un ticket ou ajoute un article.</p>`;
+  Object.keys(AISLES).forEach(g=>{
+    if(!groups[g]) return;
+    html+=`<div class="aisle"><h3>${AISLES[g]}</h3>${groups[g].sort((a,b)=>ING[a.id][0].localeCompare(ING[b.id][0],"fr")).map(r=>`<button class="srow" data-inv="${r.id}"><span>${esc(ING[r.id][0])}<br>${lvl(r)}</span><span class="qty num">${r.q===null?"en stock":"≈ "+fq(r.id,r.q)}</span></button>`).join("")}</div>`;
+  });
+  html+=`</div><p class="small muted" style="margin-top:10px">Quantités en fin de journée, après la session cuisine et les repas prévus aujourd'hui. Les épices, le sel et le poivre ne sont pas suivis.</p>`;
+  return html;
+}
+function openInv(id){
+  const {s}=stockAt(TODAY), add=!id, q=id?s[id]:undefined;
+  const opts=Object.entries(ING).sort((a,b)=>a[1][0].localeCompare(b[1][0],"fr")).map(([k,v])=>`<option value="${k}">${esc(v[0])} (${v[2]==="pc"?"pièces":v[2]})</option>`).join("");
+  $("#sheetRoot").innerHTML=`<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true" aria-label="Placard">
+    <div class="spread"><h2>${add?"Ajouter au placard":esc(ING[id][0])}</h2><button class="btn sm" id="closeSheet">Fermer</button></div>
+    ${add?`<label class="small muted" for="invSel">Article</label><select class="field" id="invSel">${opts}</select>`:`<p class="small muted">Ce soir, d'après le menu : ${q===null?"en stock, quantité non suivie":q===undefined?"rien":"≈ "+fq(id,q)}.</p>`}
+    <label class="small muted" for="invQty">${add?"Quantité achetée":"Ce que tu as vraiment"} <span id="invUnit">(${ING[id||Object.keys(ING)[0]][2]==="pc"?"pièces":ING[id||Object.keys(ING)[0]][2]})</span></label>
+    <input class="field" id="invQty" type="number" inputmode="decimal" min="0" step="any" value="${!add&&typeof q==="number"?Math.round(q):""}">
+    ${add?`<button class="btn primary" data-invsave="">Ajouter</button>`:`<button class="btn primary" data-invsave="${id}">Enregistrer cette quantité</button>
+    <div class="row"><button class="btn" data-invzero="${id}">Il n'y en a plus</button><button class="btn" data-invunk="${id}">J'en ai, je ne sais pas combien</button></div>
+    <button class="btn ghost" data-ban="${id}">Je n'en achète pas (remplacer ses recettes)</button>`}
+  </div></div>`;
+  const f=$("#invQty"); if(f) f.focus();
+}
+const invSet = (id,q) => { S.inv.push({d:iso(TODAY),id,q,set:1,src:"manuel"}); save(); };
+
+/* ---------- Tickets ---------- */
+const perTxt = (id,u) => { const t=ING[id][2]; return t==="pc"?euro(u)+" la pièce":euro(u*1000)+(t==="ml"?" le litre":" le kg"); };
+function analyze(rc){
+  const tips=[], off=[]; let est=0, plan=0, offSum=0;
+  const d=parse(rc.d), cons=consumption(d,addDays(d,13)), need={};
+  Object.values(cons).forEach(o=>Object.entries(o).forEach(([id,q])=>need[id]=(need[id]||0)+q));
+  const bought={};
+  rc.lines.forEach(([lab,id,q,p])=>{
+    if(!id){ offSum+=p; off.push(lab); return; }
+    plan+=p; if(q>0){ est+=defUP(id)*q; bought[id]=(bought[id]||0)+q;
+      const pu=p/q, du=defUP(id);
+      if(pu>du*1.25 && p>1) tips.push(`${SHORT[id]} : payé ${perTxt(id,pu)}, le repère est ${perTxt(id,du)}. Regarde la marque du magasin ou un plus grand format.`);
+    }
+  });
+  Object.entries(bought).forEach(([id,q])=>{ if(!LONG.has(id) && q>(need[id]||0)*1.5+fmts(id)[0].s*0 && q-(need[id]||0)>((fmts(id)[0].s||fmts(id)[0].pw)||0)) tips.push(`${SHORT[id]} : ${fq(id,q)} achetés, le menu n'en utilise que ${fq(id,need[id]||0)} sur 2 semaines. Risque de gaspillage : congèle le surplus ou prends un plus petit format.`); });
+  if(offSum>0) tips.push(`${euro(offSum)} d'articles hors plan (${off.slice(0,4).map(x=>x.toLowerCase()).join(", ")}${off.length>4?"…":""}). C'est permis, mais c'est la première source d'économie.`);
+  return {est,plan,offSum,tips};
+}
+function renderTickets(){
+  let html=header("Mes tickets","Prends ton ticket en photo : Claude lit les articles et les prix, tu vérifies, et ton placard se remplit tout seul.");
+  if(view.draft) return html+renderDraft();
+  html+=`<div class="card stack" style="gap:10px"><div class="row">
+    ${canPhoto!==false?`<span class="btn primary filebtn">Prendre le ticket en photo<input type="file" id="tkFile" accept="image/*" aria-label="Photo du ticket"></span>`:""}
+    <button class="btn" data-tkmanual="1">Saisir à la main</button></div>
+    <p class="small ${view.tkBusy?"":"muted"}" id="tkStatus">${view.tkBusy?"Lecture du ticket… (30 s à 1 min)":esc(view.tkMsg||(canPhoto===false?"La lecture automatique n'est pas disponible ici : saisis le ticket à la main.":"Pose le ticket à plat, bien éclairé, en entier sur la photo."))}</p></div>`;
+  const rs=S.receipts||[];
+  if(rs.length){
+    const mo=iso(TODAY).slice(0,7), month=rs.filter(r=>r.d.slice(0,7)===mo), mt=month.reduce((a,r)=>a+r.total,0);
+    const weeks=Math.max(1,Math.round((TODAY-startDate())/864e5/7)+1), all=rs.filter(r=>r.d>=S.start).reduce((a,r)=>a+r.total,0);
+    html+=`<div class="shopsum" style="margin-top:12px"><div class="card"><span class="eyebrow">Ce mois-ci</span><div class="big num">${euro(mt)}</div><span class="small muted">${month.length} ticket${month.length>1?"s":""}</span></div><div class="card"><span class="eyebrow">Par semaine</span><div class="big num">≈ ${Math.round(all/weeks)} €</div><span class="small muted">depuis le début du plan</span></div></div>`;
+    const tips=[...new Set(rs.slice(0,3).flatMap(r=>r.lines.length?analyze(r).tips:[]))].slice(0,5);
+    if(tips.length) html+=`<div class="card" style="margin-top:12px"><h3>Pour la prochaine fois</h3><ul class="small" style="margin:6px 0 0;padding-left:18px">${tips.map(t=>`<li>${esc(t)}</li>`).join("")}</ul></div>`;
+    html+=`<div class="stack" style="margin-top:12px">${rs.map(r=>{
+      const a=r.lines.length?analyze(r):null;
+      return `<details class="tk"><summary><span><b>${esc(r.store||"Ticket")}</b><br><span class="small muted">${fmtLong(parse(r.d))} · ${r.lines.length} lignes</span></span><b class="num">${euro(r.total)}</b></summary><div class="in">
+        ${a?`<p class="small">Articles du plan : <b>${euro(a.plan)}</b> (repère ≈ ${euro(a.est)})${a.offSum?` · hors plan : <b>${euro(a.offSum)}</b>`:""}</p>`:""}
+        ${a&&a.tips.length?`<ul class="small" style="margin:0;padding-left:18px">${a.tips.map(t=>`<li>${esc(t)}</li>`).join("")}</ul>`:a?`<p class="small" style="color:var(--ok)">Rien à redire : prix dans les repères, pas de surplus.</p>`:""}
+        ${r.lines.length?`<table>${r.lines.map(([lab,id,q,p])=>`<tr><td>${esc(lab)}<br><span class="small muted">${id?esc(ING[id][0])+(q?" · "+fq(id,q):""):"hors plan"}</span></td><td class="num">${euro(p)}</td></tr>`).join("")}</table>`:""}
+        ${view.ai[r.id]?`<div class="aitxt">${esc(view.ai[r.id])}</div>`:""}
+        <div class="row">${canPhoto!==false&&r.lines.length?`<button class="btn sm" data-tkai="${r.id}">${view.aiBusy===r.id?"Claude réfléchit…":"Conseils de Claude"}</button>`:""}<button class="btn sm ghost" data-tkdel="${r.id}">${view.delArm===r.id?"Confirmer la suppression":"Supprimer"}</button></div>
+      </div></details>`; }).join("")}</div>`;
+  } else html+=`<p class="muted small" style="margin-top:12px">Aucun ticket pour l'instant.</p>`;
+  return html;
+}
+const ingOptions = sel => `<option value="">Hors plan</option>`+Object.entries(ING).sort((a,b)=>a[1][0].localeCompare(b[1][0],"fr")).map(([k,v])=>`<option value="${k}" ${k===sel?"selected":""}>${esc(v[0])}</option>`).join("");
+function draftSum(){ return view.draft.lines.reduce((a,l)=>a+(+String(l.price).replace(",",".")||0),0); }
+function renderDraft(){
+  const dr=view.draft;
+  return `<div class="card stack" style="gap:10px"><h2>Vérifie le ticket</h2>
+    <p class="small muted">Corrige ce qui est faux. Les lignes reliées à un ingrédient vont dans ton placard (quantité en g, ml ou pièces).</p>
+    <div class="tline" style="border-top:0;grid-template-columns:1fr 1fr"><label class="small muted">Magasin<input class="field" data-df="store" value="${esc(dr.store)}"></label><label class="small muted">Date<input class="field" type="date" data-df="d" value="${dr.d}"></label></div>
+    ${dr.lines.map((l,i)=>`<div class="tline"><input class="field full" data-dl="${i}|label" value="${esc(l.label)}" aria-label="Libellé">
+      <select class="field full" data-dl="${i}|id" aria-label="Ingrédient">${ingOptions(l.id)}</select>
+      <span class="u">${l.id?`<input class="field" data-dl="${i}|q" type="number" inputmode="decimal" step="any" value="${l.q}" aria-label="Quantité">${ING[l.id][2]==="pc"?"pc":ING[l.id][2]}`:""}</span>
+      <span class="u"><input class="field" data-dl="${i}|price" type="number" inputmode="decimal" step="0.01" value="${l.price}" aria-label="Prix">€</span>
+      <button class="btn sm ghost" data-dlrm="${i}" aria-label="Supprimer la ligne">✕</button></div>`).join("")}
+    <button class="btn sm" data-dladd="1">Ajouter une ligne</button>
+    <div class="spread"><span class="small muted">Total du ticket</span><span class="u"><input class="field" style="width:110px" data-df="total" type="number" inputmode="decimal" step="0.01" value="${dr.total??""}">€</span></div>
+    <p class="small muted" id="dsum">Somme des lignes : ${euro(draftSum())}</p>
+    <div class="row"><button class="btn primary" data-dsave="1">Valider et remplir le placard</button><button class="btn" data-dcancel="1">Annuler</button></div></div>`;
+}
+function receiptPrompt(){
+  const list=Object.entries(ING).map(([id,[n,,u,b]])=>{ const f=Array.isArray(b)?b[0]:b; return `${id} = ${n} (unité : ${u==="pc"?"pièce":u}${f.pw?", 1 pièce ≈ "+f.pw+" g":", format courant : "+f.l})`; }).join("\n");
+  return `Voici la photo d'un ticket de caisse de supermarché français (Leclerc, Intermarché ou autre). Lis chaque article acheté et le prix payé.
+
+Réponds uniquement avec un objet JSON de cette forme :
+{"magasin": "texte", "date": "AAAA-MM-JJ" ou null, "total": nombre ou null, "lignes": [{"libelle": "texte du ticket", "prix": nombre, "id": "identifiant" ou null, "quantite": nombre ou null}]}
+
+Règles :
+- "prix" : montant payé pour la ligne en euros (pour "2 x 1,30" le prix est 2.60). Une remise imprimée sous un article se déduit de cet article.
+- Ignore sous-total, total, TVA, paiement, rendu monnaie, fidélité et bons d'achat.
+- "id" : l'identifiant de l'ingrédient ci-dessous si c'est le même produit, sinon null (produit hors plan : hygiène, boissons, plats préparés…).
+- "quantite" : quantité totale achetée dans l'unité de l'ingrédient, déduite du libellé ou du poids. Exemples : "FILET POULET 1KG" → 1000 ; "OEUFS X12" → 12 ; 2 × "LAIT 1L" → 2000 ; fruits et légumes au poids → le poids en g ; à la pièce → nombre de pièces × poids d'une pièce. null si impossible à savoir.
+- "total" : le total payé.
+
+Ingrédients du plan :
+${list}`;
+}
+function toDraft(data){
+  const n=v=>{ const x=typeof v==="string"?parseFloat(v.replace(",",".")):v; return typeof x==="number"&&isFinite(x)?x:null; };
+  const lines=(Array.isArray(data&&data.lignes)?data.lignes:[]).map(l=>{
+    const id=l&&ING[l.id]?l.id:""; let q=n(l&&l.quantite);
+    if(id && !(q>0)){ const f=fmts(id)[0]; q=f.s||f.pw; }
+    return {label:String((l&&l.libelle)||"").slice(0,60),id,q:id?Math.round(q):"",price:n(l&&l.prix)??""};
+  }).filter(l=>l.label||l.price!=="");
+  const d=data&&/^\d{4}-\d{2}-\d{2}$/.test(data.date||"")?data.date:iso(TODAY);
+  return {store:String((data&&data.magasin)||"").slice(0,40),d,total:n(data&&data.total),lines};
+}
+function saveDraft(){
+  const dr=view.draft, rid="r"+Date.now(), num=v=>+String(v).replace(",",".")||0;
+  const lines=dr.lines.filter(l=>l.label||num(l.price)).map(l=>[l.label||"Article",l.id||"",l.id?num(l.q):0,num(l.price)]);
+  const d=/^\d{4}-\d{2}-\d{2}$/.test(dr.d)?dr.d:iso(TODAY), lo=iso(addDays(parse(d),-3));
+  // le ticket remplace ce qui avait été ajouté depuis la liste de courses ces jours-là
+  S.inv=S.inv.filter(e=>!(e.src==="liste"&&e.d>=lo&&e.d<=d));
+  lines.forEach(([,id,q,p])=>{ if(!id||!(q>0)) return; S.inv.push({d,id,q,src:rid}); const u=p/q, du=defUP(id); if(p>0 && u>du/3 && u<du*3) S.up[id]=u; });
+  S.receipts=(S.receipts||[]).concat([{id:rid,d,store:dr.store,total:num(dr.total)||lines.reduce((a,l)=>a+l[3],0),lines}]).sort((a,b)=>b.d.localeCompare(a.d));
+  view.draft=null; view.tkMsg="Ticket enregistré : ton placard est à jour."; save(); render();
+}
+let sampleP=null, canPhoto=null, imgMax=0;
+const getSample = () => sampleP || (sampleP=(window.claude&&window.claude.use?Promise.resolve(window.claude.use("sample")):Promise.resolve(null)).catch(()=>null));
+async function initSample(){
+  const sm=await getSample();
+  const l=sm?await sm.limits().catch(()=>null):null;
+  canPhoto=!!(l&&l.images); imgMax=(l&&l.images&&l.images.maxInputBytes)||0;
+  if(view.tab==="tickets"&&!view.draft) render();
+}
+async function shrink(file){
+  try{
+    const bmp=await createImageBitmap(file), k=Math.min(1,2600/Math.max(bmp.width,bmp.height));
+    const c=document.createElement("canvas"); c.width=Math.round(bmp.width*k); c.height=Math.round(bmp.height*k);
+    c.getContext("2d").drawImage(bmp,0,0,c.width,c.height);
+    let q=0.88, b=await new Promise(r=>c.toBlob(r,"image/jpeg",q));
+    while(b && imgMax && b.size>imgMax && q>0.4){ q-=0.15; b=await new Promise(r=>c.toBlob(r,"image/jpeg",q)); }
+    return b||file;
+  }catch(e){ return file; }
+}
+const SAMPLE_MSG = {not_granted:"Tu as refusé l'accès à Claude : saisis le ticket à la main.",rate_limited:"Trop de demandes d'un coup : réessaie dans une minute.",images_unavailable:"La lecture des photos n'est pas disponible ici : saisis le ticket à la main.",image_rejected:"Cette photo n'est pas lisible (format ou taille). Essaie une autre photo."};
+async function readReceipt(file){
+  view.tkBusy=true; view.tkMsg=""; render();
+  try{
+    const sm=await getSample(); if(!sm) throw {code:"images_unavailable"};
+    const img=await shrink(file);
+    const data=await sm.json(receiptPrompt(),{images:[img]});
+    const dr=toDraft(data);
+    if(!dr.lines.length) throw {code:"empty"};
+    view.draft=dr;
+  }catch(e){ view.tkMsg=SAMPLE_MSG[e&&e.code]||"Je n'ai pas réussi à lire ce ticket. Réessaie avec une photo à plat et bien éclairée, ou saisis-le à la main."; if(e&&(e.code==="not_granted"||e.code==="images_unavailable")) canPhoto=false; }
+  view.tkBusy=false; render(); window.scrollTo(0,0);
+}
+async function askTips(rid){
+  const r=S.receipts.find(x=>x.id===rid); if(!r) return;
+  view.aiBusy=rid; render();
+  try{
+    const sm=await getSample(); if(!sm) throw {code:"images_unavailable"};
+    const lines=r.lines.map(([lab,id,q,p])=>`- ${lab} : ${p} € ${id?`(ingrédient ${ING[id][0]}, ${fq(id,q)}, repère ${perTxt(id,defUP(id))})`:"(hors plan)"}`).join("\n");
+    const {text}=await sm(`Tu aides un pompier volontaire de 25 ans qui suit un plan de prise de masse à 2 550 kcal par jour, cuisine en 2 sessions par semaine et veut dépenser moins. Voici son ticket de caisse (${r.store||"supermarché"}, total ${r.total} €) :
+${lines}
+
+Donne 3 à 5 conseils concrets et courts, en français, pour payer moins cher la prochaine fois sans sortir du plan : formats plus avantageux, marque du magasin, surgelés, articles hors plan, gaspillage. Une liste avec des tirets, sans introduction ni conclusion, tutoiement.`,{modelTier:"quick"});
+    view.ai[rid]=text.trim();
+  }catch(e){ view.ai[rid]=SAMPLE_MSG[e&&e.code]||"Claude n'a pas pu répondre. Réessaie plus tard."; }
+  view.aiBusy=null; render();
+}
+
+/* ---------- Session guidée ---------- */
+let wakeLock=null;
+async function keepAwake(on){
+  try{ if(on&&!wakeLock&&navigator.wakeLock){ wakeLock=await navigator.wakeLock.request("screen"); wakeLock.addEventListener("release",()=>{wakeLock=null;}); } if(!on&&wakeLock){ await wakeLock.release(); wakeLock=null; } }catch(e){}
+}
+function renderCook(){
+  const B=buildSession(view.cook), back=`<button class="btn sm" data-go="${view.prev||"today"}">‹ Retour</button>`;
+  if(!B||!B.steps.length) return `<div class="top"><div class="spread">${back}<span class="sync" id="sync">${esc(syncMsg)}</span></div><h1>Session introuvable</h1><p class="muted">Elle a été supprimée, ou tous ses repas sont déjà préparés autrement.</p></div>`;
+  const I=B.I, date=I.date, done=S.cook[view.cook]||{}, nd=B.steps.filter(s=>done[s.id]).length, next=B.steps.find(s=>!done[s.id]);
+  const short={}; // v11 : le placard n'est plus calculé en grammes
+  let html=`<div class="top"><div class="spread">${back}<span class="sync" id="sync">${esc(syncMsg)}</span></div>
+    <h1>${I.title}</h1><p class="muted">${fmtLong(date).replace(/^./,c=>c.toUpperCase())} · ${esc(I.range)} · ${[B.boxes?B.boxes+(B.I.fresh?" portion":" boîtes"):"",B.pots?B.pots+" pots":""].filter(Boolean).join(" + ")}</p></div>`;
+  html+=`<div class="stack" style="gap:6px"><div class="spread"><span class="small muted">${nd} étape${nd>1?"s":""} sur ${B.steps.length}</span>${sessionDone(view.cook)?`<button class="btn sm ghost" data-sdone="${view.cook}">Annuler « cuisiné »</button>`:`<button class="btn sm primary" data-sdone="${view.cook}">Tout est cuisiné ✓</button>`}<button class="btn sm ghost" data-cookreset="1">Tout décocher</button></div><div class="progress"><span style="width:${Math.round(nd/B.steps.length*100)}%"></span></div></div>`;
+  html+=`<div class="card" style="margin-top:12px"><span class="eyebrow">Au menu</span><ul style="margin:4px 0 0;padding-left:18px">${[...B.items,...B.extra].map(it=>`<li><b>${esc(R[it.r].n)}</b> × ${it.p} <span class="small muted">(${it.dates.map(d=>dShort(d)+(B.c.freeze.some(f=>iso(f)===iso(d))&&R[it.r].c!=="B"&&R[it.r].c!=="C"?" ❄":"")).join(", ")})</span></li>`).join("")}${B.c.balls?`<li>Boules énergétiques × ${B.c.balls}</li>`:""}</ul></div>`;
+  html+=`<details class="tk" style="margin-top:10px" ${nd===0?"open":""}><summary><b>Ce qu'il te faut</b><span class="small muted">${Object.keys(B.ings).length} ingrédients</span></summary><div class="in"><ul style="margin:0;padding-left:18px">${Object.entries(B.ings).sort((a,b)=>ING[a[0]][1].localeCompare(ING[b[0]][1])).map(([id,q])=>`<li>${esc(SHORT[id])} : <b>${fq(id,q)}</b>${short[id]?` <span class="lvl warn">· d'après ton placard, il risque d'en manquer</span>`:""}</li>`).join("")}</ul><p class="small muted">Plus les épices : curry, cumin, paprika, herbes de Provence, ail, sel, poivre.</p></div></details>`;
+  if(!next) html+=`<div class="banner" style="margin-top:12px"><b>Session terminée, bravo !</b><span>${[B.boxes?B.boxes+(B.I.fresh?" portion":" boîtes"):"",B.pots?B.pots+" pots":""].filter(Boolean).join(" et ")} prêts. C'est noté comme cuisiné ✓</span></div>`;
+  let ph=0;
+  B.steps.forEach(s=>{
+    if(s.ph!==ph){ ph=s.ph; html+=`<h3 class="phase eyebrow">${ph}. ${PHASES[ph]}</h3>`; }
+    const t=timers.find(x=>x.id===s.id), on=!!done[s.id];
+    html+=`<div class="step ${on?"done":""} ${next===s?"next":""}"><button class="check" role="checkbox" aria-checked="${on}" data-step="${s.id}" aria-label="Étape faite">✓</button>
+      <div class="stack" style="gap:6px"><p class="txt">${esc(s.txt)}</p>${s.rec?`<span class="tags">${esc(s.rec)}</span>`:""}
+      ${s.min&&!on?`<div><button class="btn sm" data-timer="${s.id}|${s.min}|${esc(stepLabel(s.txt))}">${t?"Minuteur en cours · relancer":"⏱ Minuteur "+s.min+" min"}</button></div>`:""}</div></div>`;
+  });
+  html+=`<p class="small muted" style="margin-top:10px">L'écran reste allumé pendant la session. Les minuteurs sonnent même si tu changes d'onglet dans la page.</p>`;
+  return html;
+}
+
+/* ---------- Minuteurs ---------- */
+let timers=[]; try{ timers=JSON.parse(localStorage.getItem("plan-timers")||"[]").filter(t=>t.end>Date.now()-36e5); }catch(e){}
+let actx=null;
+const saveTimers = () => { try{ localStorage.setItem("plan-timers",JSON.stringify(timers)); }catch(e){} };
+function unlockAudio(){ try{ actx=actx||new (window.AudioContext||window.webkitAudioContext)(); if(actx.state==="suspended") actx.resume(); }catch(e){} }
+function beep(){
+  try{ unlockAudio(); const t0=actx.currentTime; [0,.35,.7].forEach(dt=>{ const o=actx.createOscillator(), g=actx.createGain(); o.frequency.value=880; o.connect(g); g.connect(actx.destination); g.gain.setValueAtTime(.0001,t0+dt); g.gain.exponentialRampToValueAtTime(.35,t0+dt+.02); g.gain.exponentialRampToValueAtTime(.0001,t0+dt+.3); o.start(t0+dt); o.stop(t0+dt+.32); }); }catch(e){}
+  try{ if(navigator.vibrate) navigator.vibrate([300,150,300,150,300]); }catch(e){}
+}
+function renderTimers(){
+  const el=document.getElementById("timerBar"); if(!el) return;
+  if(!timers.length){ el.hidden=true; el.innerHTML=""; return; }
+  const now=Date.now(); el.hidden=false;
+  el.innerHTML=timers.map(t=>{ const left=Math.max(0,Math.round((t.end-now)/1000)), fin=left<=0;
+    return `<div class="tm ${fin?"done":""}"><span>${esc(t.label)}</span><b class="num">${fin?"C'est prêt !":Math.floor(left/60)+":"+pad(left%60)}</b><button data-tstop="${esc(t.id)}" aria-label="${fin?"Arrêter l'alarme":"Annuler le minuteur"}">${fin?"OK":"✕"}</button></div>`; }).join("");
+}
+setInterval(()=>{
+  const now=Date.now(); let ring=false;
+  timers.forEach(t=>{ if(t.end<=now && (!t.rang || (t.rang<4 && now-t.rang>=20000))){ t.rang=now; t.rings=(t.rings||0)+1; if(t.rings>=4) t.rang=4; ring=true; } });
+  if(ring){ beep(); saveTimers(); }
+  renderTimers();
+},1000);
+
+
+function renderRecipes(){
+  const seg=`<div class="row" style="margin-bottom:12px"><button class="btn sm seg" data-sub="recipes" aria-pressed="${view.rsub!=="advice"}">Recettes</button><button class="btn sm seg" data-sub="advice" aria-pressed="${view.rsub==="advice"}">Conseils du coach</button></div>`;
+  if(view.rsub==="advice") return renderAdvice().replace('<div class="advice">',seg+'<div class="advice">');
+  let html=header("Recettes",`Les 35 recettes du PDF de ton coach : 7 petits-déjeuners, 14 collations, 7 déjeuners, 7 dîners. Règle du coach : tu peux remplacer une recette par n'importe quelle autre de la même catégorie.`)+seg;
+  { const used=new Set(); Object.values(R).forEach(r=>Object.keys(r.i).forEach(i=>used.add(i)));
+    const ids=[...used].sort((a,b)=>ING[a][0].localeCompare(ING[b][0],"fr")), bans=ids.filter(id=>S.ban&&S.ban[id]);
+    const out=Object.keys(R).filter(id=>banned(id).length);
+    html+=`<details class="tk" style="margin-bottom:12px" ${view.dislikeOpen||!bans.length?"open":""}><summary><b>Je n'aime pas</b><span class="small muted">${bans.length?bans.length+" aliment"+(bans.length>1?"s":"")+" · "+out.length+" recette"+(out.length>1?"s":"")+" écartée"+(out.length>1?"s":""):"touche ce que tu ne veux pas manger"}</span></summary><div class="in">
+      <p class="small muted">Touche un aliment : chaque plat qui en contient est remplacé par une autre recette du PDF (même catégorie, mêmes calories). Touche-le encore pour le remettre.</p>
+      <div class="row" style="margin-top:8px">${ids.map(id=>{ const on=!!(S.ban&&S.ban[id]); return `<button class="chip" data-dislike="${id}" aria-pressed="${on}" style="${on?"background:var(--guard-soft);color:var(--guard);text-decoration:line-through":""}">${esc(ING[id][0])}</button>`; }).join("")}</div>
+      ${["B","C","L","D"].filter(c=>Object.entries(R).filter(([,r])=>r.c===c).every(([id])=>banned(id).length)).map(c=>`<p class="small" style="margin-top:8px"><b>Attention :</b> plus aucune recette possible en ${esc(CAT[c].n.toLowerCase())}, le plan du coach est gardé pour ce repas.</p>`).join("")}
+    </div></details>`; }
+  [["B","Petits-déjeuners · 500 kcal"],["C","Collations · 250 kcal"],["L","Déjeuners · 700 kcal"],["D","Dîners · 850 kcal"]].forEach(([c,t])=>{
+    html+=`<h2 style="margin:20px 0 10px">${t}</h2><div class="rgroup">`;
+    Object.entries(R).filter(([,r])=>r.c===c).forEach(([id,r])=>{
+      const nb=banned(id);
+      html+=`<details class="recipe cat-${c}"><summary><b>${esc(r.n)}</b><span class="small muted">${nb.length?"écartée : tu n'aimes pas "+esc(ingNames(nb))+" · ":""}${id}</span></summary><div class="in">
+        <ul>${Object.entries(r.i).map(([i,q])=>`<li>${esc(ING[i][2]==="pc"?qtyTxt(i,q):SHORT[i]+" : "+q+" "+ING[i][2])}</li>`).join("")}</ul>
+        ${(c==="L"||c==="D")&&STEPS[id]?`<ol class="small" style="padding-left:18px">${recipeSteps(id).map(s=>`<li>${esc(s.txt)}</li>`).join("")}</ol>`:""}
+        ${BC[id]?`<ol class="small" style="padding-left:18px">${bcSteps(id).map(t=>`<li>${esc(t)}</li>`).join("")}</ol>${BC[id].pre?`<p class="small"><b>À l'avance</b> (avec « Je cuisine ») : ${esc(BC[id].pre.map(t=>fillBC(t,id,1)).join(" "))}</p>`:`<p class="small muted">Fait pendant tes sessions cuisine, pour toute la semaine.</p>`}`:""}
+        ${r.h&&!BC[id]?`<p>${esc(r.h)}</p>`:""}${(c==="L"||c==="D")?`<p class="small muted">Quantités pour 1 portion. En session cuisine, l'app multiplie tout et mélange les recettes dans le bon ordre. Riz, pâtes, semoule et quinoa pesés crus ; viandes et poissons pesés crus.</p>`:""}</div></details>`;
+    });
+    html+=`</div>`;
+  });
+  return html;
+}
+
+const ALT=["eau pétillante, citron et menthe dans un joli verre","un mocktail maison sans alcool","une infusion glacée","15 minutes de marche en rentrant","une douche puis de la musique","15 minutes sans téléphone","quelques étirements","préparer le dîner tranquillement"];
+function renderAdvice(){
+  return header("Conseils du coach",`Le résumé de ton plan, à relire quand tu doutes.`)+`<div class="advice">
+  <div class="card"><h2>Ton profil</h2><p>69 kg · 1,80 m · 25 ans. Métabolisme de base : 1 690 kcal. Dépense actuelle : 2 000 à 2 100 kcal, et 2 250 à 2 400 kcal avec 3 séances de musculation par semaine.</p>
+   <p><b>Objectif : prise de masse à 2 500 – 2 600 kcal par jour.</b></p>
+   <div class="macro"><div><b class="num">110–125 g</b><span class="small">Protéines</span></div><div><b class="num">70–85 g</b><span class="small">Lipides</span></div><div><b class="num">330–370 g</b><span class="small">Glucides</span></div></div></div>
+  <div class="card"><h2>Les 3 macronutriments</h2><ul>
+   <li><b>Protéines</b> : les matériaux de construction des muscles. Viandes, poissons, œufs, skyr, fromage blanc, légumineuses.</li>
+   <li><b>Glucides</b> : le carburant. Riz, pâtes, pain, pommes de terre, avoine, fruits. Pas de raison de les supprimer le soir.</li>
+   <li><b>Lipides</b> : indispensables aux hormones et au cerveau. Huile d'olive, oléagineux, avocat, poissons gras.</li></ul></div>
+  <div class="card"><h2>Portions sans balance : la main</h2><div class="hand">
+   <div><b>Paume</b>Protéines · 100 à 150 g de viande ou poisson cru</div><div><b>Poing fermé</b>Féculents cuits · 150 à 200 g</div>
+   <div><b>Poignée</b>Oléagineux · 25 à 30 g</div><div><b>Pouce</b>Matières grasses · 10 à 15 g</div>
+   <div><b>Deux mains en coupe</b>Légumes · 150 à 250 g</div><div><b>Un poing</b>Fruit · 120 à 180 g</div></div></div>
+  <div class="card"><h2>La règle du 80/20</h2><p>80 % d'aliments de qualité, 20 % de petits plaisirs : un restaurant dans la semaine, quelques chips un soir. Répartis les écarts plutôt que de faire deux journées déséquilibrées. Épices à volonté, sel avec modération.</p><p><b>Le mieux sera toujours mieux que le pas du tout.</b> Un écart ne remet pas tes efforts en question : on cherche la régularité, pas la perfection.</p></div>
+  <div class="card"><h2>Le verre en rentrant du travail</h2><p>L'alcool apporte 7 kcal par gramme sans rien pour les muscles, perturbe la récupération et dégrade le sommeil. L'idée est de garder le moment de détente et de changer ce qui l'accompagne.</p>
+   <ul><li>Une boisson plaisir : eau pétillante citron-menthe, mocktail, infusion glacée. Garde un joli verre pour conserver le geste.</li>
+   <li>Un sas de décompression : musique, douche, lecture, 15 min sans téléphone.</li>
+   <li>Une activité : marcher 15 à 20 min, s'étirer, prendre l'air.</li>
+   <li>Ne pas garder d'alcool facilement accessible à la maison, prévoir la boisson de remplacement à l'avance.</li></ul>
+   <div class="warnbox">Si tu bois tous les jours depuis longtemps ou si tu as des signes de manque (tremblements, sueurs, anxiété, palpitations), n'arrête pas d'un coup : parles-en à un médecin ou à un CSAPA.</div></div>
+  <div class="card"><h2>Le sommeil</h2><ul><li>Viser 7 à 9 heures par nuit, à horaires réguliers, même le week-end.</li><li>Couper les écrans 30 à 60 min avant de dormir.</li><li>Chambre sombre, calme et fraîche.</li><li>Pas de café ni de boisson énergisante après le début d'après-midi.</li><li>Un rituel : lecture, musique calme, respiration, douche tiède.</li></ul>
+   <p class="small muted">La mélatonine peut aider à s'endormir, mais elle ne remplace pas ces habitudes et peut interagir avec certains médicaments.</p></div>
+  <div class="card"><h2>Tabac et entraînement</h2><p>Si tu fumes, ton coach conseille de réduire petit à petit (patchs, substituts nicotiniques, aide d'un professionnel de santé).</p><p><b>Musculation :</b> d'abord 15 jours à installer ces habitudes alimentaires, puis ton coach te donnera ton programme.</p></div>
+  </div>`;
+}
+
+function render(){
+  resetSubs();
+  if(!view.week) view.week = TODAY<startDate()?startDate():planWeek(TODAY);
+  renderTabs();
+  if(!view.month) view.month = new Date((TODAY<startDate()?startDate():TODAY).getFullYear(),(TODAY<startDate()?startDate():TODAY).getMonth(),1);
+  if(view.tab==="menu"&&!view.mp) view.tab="shop";
+  const map={menu:renderMenu,today:renderToday,plan:renderPlan,week:renderWeek,shop:renderShop,stock:renderStock,tickets:renderTickets,recipes:renderRecipes,cook:renderCook};
+  if(view.tab==="cook"&&!view.cook) view.tab="today";
+  keepAwake(view.tab==="cook");
+  $("#app").innerHTML=(map[view.tab]||renderToday)();
+  renderTimers();
+}
+
+/* ---------- Sheet d'échange ---------- */
+// aliments à ne plus acheter : ceux des recettes du plan
+function openBan(){
+  const used=new Set(); Object.values(R).forEach(r=>Object.keys(r.i).forEach(i=>used.add(i)));
+  const ids=[...used].filter(id=>!(S.ban&&S.ban[id])).sort((a,b)=>ING[a][0].localeCompare(ING[b][0],"fr"));
+  $("#sheetRoot").innerHTML=`<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true" aria-label="Je n'en achète pas">
+    <div class="spread"><h2>Je n'en achète pas</h2><button class="btn sm" id="closeSheet">Fermer</button></div>
+    <p class="small muted">Touche un aliment : les recettes qui en contiennent seront remplacées par une autre recette de ton plan.</p>
+    <div class="row">${ids.map(id=>`<button class="chip" data-ban="${id}">${esc(ING[id][0])}</button>`).join("")}</div>
+  </div></div>`;
+}
+function openSwap(w,key,cat,cur,wsI){
+  const P=wsI&&S.picks&&S.picks[wsI];
+  const auto = defaultFor(w,key), {s}=stockAt(TODAY), keep = !P && cur!==auto && !S.swaps[w+"-"+key];
+  const opts=Object.entries(R).filter(([id,r])=>r.c===cat&&(id===cur||!banned(id).length));
+  const hidden=Object.keys(R).filter(id=>R[id].c===cat&&banned(id).length);
+  const isBatch = cat==="L"||cat==="D";
+  $("#sheetRoot").innerHTML=`<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true" aria-label="Changer de recette">
+    <div class="spread"><h2>Changer de ${CAT[cat].n.toLowerCase()}</h2><button class="btn sm" id="closeSheet">Fermer</button></div>
+    <p class="small muted">Menu ${w+1}/4. Le changement s'applique ${(()=>{const s=+key.slice(-1);const X=i=>dayOf(startDate(),i).toLowerCase(); return s===2?"du "+X(4)+" au "+X(6):s===1?"au "+X(2)+" et au "+X(3):"au "+X(0)+" et au "+X(1);})()}${isBatch?" (toutes les portions de la boîte)":""}. Pour payer moins cher, choisis une recette qui reprend des ingrédients déjà dans ta semaine. La liste de courses se met à jour.</p>
+    ${opts.map(([id,r])=>{ const mi=missIn(id,s); return `<button class="opt ${id===cur?"cur":""}" data-pick="${w}|${key}|${id}|${keep&&id===auto?"keep":""}|${P?wsI:""}"><b>${esc(r.n)}${id===cur?" · actuel":""}${id===auto&&id!==cur?" · prévu au menu":""}</b><span class="ings">${esc(ingLine(id))}</span>${mi.length?`<span class="small muted">Pas au placard ce soir : ${esc(ingNames(mi))}</span>`:""}</button>`; }).join("")}
+    ${hidden.length?`<p class="small muted">Non proposées (aliments que tu n'achètes pas) : ${hidden.map(id=>esc(R[id].n)).join(", ")}.</p>`:""}
+    ${(P?P[key]:S.swaps[w+"-"+key])?`<button class="btn" data-pick="${w}|${key}|__reset||${P?wsI:""}">Revenir au menu ${P?"du coach":"prévu"}</button>`:""}
+  </div></div>`;
+  const first=$("#sheetRoot .opt.cur")||$("#sheetRoot .opt"); if(first) first.focus();
+}
+/* ---------- Changer un repas : ce jour-là, et les jours que tu choisis ---------- */
+function openDSW(){
+  const V=view.dsw, day=parse(V.d), ws=planWeek(day), cat=V.cat, cur=V.r;
+  const opts=Object.entries(R).filter(([id,r])=>r.c===cat&&(id===cur||!banned(id).length));
+  const lab={B:"petit-déjeuner",CM:"collation du matin",L:"déjeuner",CA:"collation de l'après-midi",D:"dîner"}[V.p];
+  const days=Array.from({length:7},(_,i)=>addDays(ws,i)).filter(d=>d>=startDate());
+  const ownSel=V.days.some(d=>S.dp&&S.dp[d]&&S.dp[d][V.p]);
+  $("#sheetRoot").innerHTML=`<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true" aria-label="Changer de recette">
+    <div class="spread"><h2>Changer le ${lab}</h2><button class="btn sm" id="closeSheet">Fermer</button></div>
+    <p class="small muted" style="margin-top:6px">Pour quels jours ? (touche pour ajouter ou retirer)</p>
+    <div class="picks" style="margin:6px 0 10px">${days.map(d=>{ const k=iso(d), on=V.days.includes(k), lock=d<TODAY; return `<button class="dbtn" style="flex-direction:row" data-dswday="${k}" aria-pressed="${on}" ${lock?"disabled":""}>${dShort(d)}</button>`; }).join("")}</div>
+    ${(cat==="L"||cat==="D")?`<p class="small muted">Un même plat sur plusieurs jours est cuisiné en une seule fois (boîtes).</p>`:""}
+    <div class="stack" style="gap:6px;margin-top:8px">${opts.map(([id,r])=>`<button class="opt ${id===cur?"cur":""}" data-dswpick="${id}"><b>${esc(r.n)}${id===cur?" · actuel":""}${id===coachFor(day,V.p)&&id!==cur?" · menu du coach":""}</b><span class="ings">${esc(ingLine(id))}</span></button>`).join("")}</div>
+    ${ownSel?`<button class="btn" style="margin-top:10px;width:100%" data-dswpick="__coach">Revenir au menu du coach pour ces jours</button>`:""}
+  </div></div>`;
+}
+function dswApply(id){
+  const V=view.dsw; S.dp=S.dp||{};
+  V.days.forEach(k=>{ const o=S.dp[k]=S.dp[k]||{}; if(id==="__coach"||id===coachFor(parse(k),V.p)) delete o[V.p]; else o[V.p]=id; if(!Object.keys(o).length) delete S.dp[k]; });
+  save(); closeSheet(); render();
+}
+/* ---------- Sauvegarder / restaurer ---------- */
+function dataExport(){
+  const txt=JSON.stringify(S), name="plan-alimentaire-"+iso(TODAY)+".json";
+  const inClaude=!!(window.claude&&window.claude.use);
+  if(!inClaude) try{ const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([txt],{type:"application/json"})); a.download=name; document.body.appendChild(a); a.click(); a.remove(); }catch(e){}
+  $("#sheetRoot").innerHTML=`<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true" aria-label="Sauvegarder mes données">
+    <div class="spread"><h2>Sauvegarder mes données</h2><button class="btn sm" id="closeSheet">Fermer</button></div>
+    <p class="small muted">${inClaude?"":"Le fichier "+name+" est téléchargé. "}Voici ton code : copie-le en entier, puis colle-le dans « Mes données › Restaurer » sur l'autre appareil ou sur ton site. Tu peux aussi te l'envoyer par message pour le garder.</p>
+    <textarea id="expTxt" rows="6" readonly style="width:100%;margin-top:10px;font:inherit;font-size:.75rem;padding:8px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink)"></textarea>
+    <button class="btn primary" style="margin-top:10px;width:100%" id="expCopy">Copier le code</button>
+    <p class="small" id="expMsg" style="margin-top:6px"></p></div></div>`;
+  const ta=document.getElementById("expTxt"); ta.value=txt;
+  document.getElementById("expCopy").addEventListener("click",()=>{ ta.focus(); ta.select(); ta.setSelectionRange(0,txt.length); let ok=false; try{ ok=document.execCommand("copy"); }catch(e){}
+    const m=document.getElementById("expMsg"); (navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(()=>m.textContent="Copié ✓",()=>m.textContent=ok?"Copié ✓":"Le texte est sélectionné : fais « Copier » avec ton téléphone."); });
+}
+function openImport(){
+  $("#sheetRoot").innerHTML=`<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true" aria-label="Restaurer mes données">
+    <div class="spread"><h2>Restaurer mes données</h2><button class="btn sm" id="closeSheet">Fermer</button></div>
+    <p class="small muted">Choisis le fichier sauvegardé, ou colle le code copié. Attention : ça remplace les données de cet appareil.</p>
+    <span class="btn filebtn" style="margin-top:10px">Choisir le fichier<input type="file" id="impFile" accept=".json,application/json,text/plain" aria-label="Fichier de sauvegarde"></span>
+    <textarea id="impTxt" rows="5" style="width:100%;margin-top:10px;font:inherit;font-size:.8rem;padding:8px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink)" placeholder="…ou colle le code ici"></textarea>
+    <button class="btn primary" style="margin-top:10px;width:100%" data-dataimpgo="1">Restaurer</button>
+    <p class="small" id="impMsg" style="margin-top:6px"></p>
+  </div></div>`;
+  const f=document.getElementById("impFile"); if(f) f.addEventListener("change",()=>{ const file=f.files[0]; if(!file) return; file.text().then(t=>{ document.getElementById("impTxt").value=t; dataImport(); }); });
+}
+function dataImport(){
+  const t=(document.getElementById("impTxt").value||"").trim(), m=document.getElementById("impMsg");
+  let d; try{ d=JSON.parse(t); }catch(e){ m.textContent="Ce code n'est pas valide : recopie-le en entier."; return; }
+  if(!d||typeof d!=="object"||!d.start){ m.textContent="Ce n'est pas une sauvegarde du plan alimentaire."; return; }
+  load(d); save(); closeSheet(); render();
+}
+/* ---------- Pas mangé : l'appli te demande si c'était cuisiné ---------- */
+function skipInfo(d,k){
+  const day=parse(d), m=mealsFor(day), x=m.list.find(y=>y.k===k), cv=covers(), when=whenUsed(day,m,x,sessionsFor(m.ws),cv);
+  const LD=x.cat==="L"||x.cat==="D", p=prepOf(m,x);
+  const done = !!(p && sessionDone(p.key)); // tu as confirmé la session
+  const later = !!(p && !done && p.date>=TODAY && p.date<=day && !p.fresh);
+  return {day,m,x,when,LD,p,done,later};
+}
+function openSkip(){
+  const K=view.sk, I=skipInfo(K.d,K.k), r=R[I.x.r];
+  if(K.cooked===undefined) K.cooked = I.done ? 1 : null;
+  const opt=(k,t,s)=>`<button class="opt" data-skbox="${k}" aria-pressed="${K.box===k}"><b>${t}</b>${s?`<span class="ings">${s}</span>`:""}</button>`;
+  const yn=(v,t)=>`<button class="dbtn" style="flex-direction:row" data-skcook="${v}" aria-pressed="${K.cooked===v}">${t}</button>`;
+  const ok = K.why && K.cooked!==null && !(K.cooked===1 && I.LD && !K.box);
+  $("#sheetRoot").innerHTML=`<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true" aria-label="Repas pas mangé">
+    <div class="spread"><h2>Pas mangé</h2><button class="btn sm" id="closeSheet">Fermer</button></div>
+    <p class="small muted">${esc(I.x.lab||CAT[I.x.cat].n)} du ${fmtLong(I.day)} : <b>${esc(r.n)}</b></p>
+    <h3 style="margin:14px 0 8px">Pourquoi ?</h3>
+    <div class="picks">${Object.entries(WHY).map(([k,t])=>`<button class="dbtn" style="flex-direction:row" data-skwhy="${k}" aria-pressed="${K.why===k}">${t}</button>`).join("")}</div>
+    <h3 style="margin:16px 0 8px">Tu l'avais cuisiné${I.LD?"":" ou préparé"} ?</h3>
+    <div class="picks">${yn(1,"Oui")}${yn(0,"Non")}</div>
+    ${K.cooked===0?`<p class="small" style="margin-top:10px">Rien n'est perdu : les aliments restent chez toi et ne sont pas comptés.${I.later?` La session du ${fmtLong(I.p.date)} en préparera une portion de moins.`:""}</p>`:""}
+    ${K.cooked===1&&I.LD?`<h3 style="margin:16px 0 8px">Et la boîte ?</h3><div class="stack" style="gap:6px">
+      ${opt("spare","Je la mange un autre jour",`Elle se garde jusqu'au ${fmtLong(addDays(I.when<=I.day?I.when:I.day,FRIDGE_DAYS))} ; tu choisis ensuite le repas qu'elle remplace (ce repas-là ne sera pas cuisiné).`)}
+      ${opt("freeze","Au congélateur","Un repas de secours pour plus tard (3 mois).")}
+      ${opt("trash","Jetée ou donnée","")}</div>`:""}
+    ${K.cooked===1&&!I.LD?`<p class="small" style="margin-top:10px">Le pot reste au frigo : mange-le dans les jours qui viennent.</p>`:""}
+    <button class="btn primary" style="margin-top:14px;width:100%" data-skgo="1" ${ok?"":"disabled"}>Valider</button>
+  </div></div>`;
+}
+function doSkip(){
+  const K=view.sk, I=skipInfo(K.d,K.k), key=K.d+"|"+K.k;
+  const box = K.cooked===1 ? (I.LD?K.box:"pot") : "";
+  S.skip=S.skip||{}; S.skip[key]={why:K.why,made:K.cooked===1?1:0,box};
+  if(K.cooked===1&&I.LD&&(box==="spare"||box==="freeze")){ S.spare=S.spare||[]; S.spare.push({id:"b"+Date.now().toString(36),r:I.x.r,from:key,made:iso(I.when<=I.day?I.when:I.day),where:box==="freeze"?"congel":"frigo",use:null}); }
+  save(); closeSheet(); render();
+  if(K.cooked===1&&I.LD&&box==="spare") openSpare(S.spare[S.spare.length-1].id);
+}
+function unskip(key){ delete S.skip[key]; S.spare=(S.spare||[]).filter(s=>s.from!==key); save(); render(); }
+/* ---------- Boîtes en plus ---------- */
+const spareEnd = sp => sp.where==="congel" ? addDays(TODAY,60) : addDays(parse(sp.made),FRIDGE_DAYS);
+// repas pas encore cuisinés qu'une boîte en plus peut remplacer
+function spareTargets(sp){
+  const out=[], cv=covers(), end=spareEnd(sp), first=sp.where==="congel"?addDays(TODAY,1):TODAY;
+  for(let day=first; day<=end && day<=addDays(TODAY,21); day=addDays(day,1)){
+    if(day<startDate()) continue;
+    const m=mealsFor(day), s=sessionsFor(m.ws), d=iso(day);
+    m.list.forEach(x=>{ if(x.cat!=="L"&&x.cat!=="D") return; if(skipOf(d,x.k)||spareFor(d,x.k)) return;
+      const when=whenUsed(day,m,x,s,cv); if(!(when>TODAY || (iso(when)===d && day>=TODAY))) return;
+      out.push({d,k:x.k,x,when,fresh:iso(when)===d}); });
+  }
+  return out;
+}
+function openSpare(id){
+  const sp=(S.spare||[]).find(s=>s.id===id); if(!sp) return;
+  const T=spareTargets(sp);
+  $("#sheetRoot").innerHTML=`<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true" aria-label="Boîte en plus">
+    <div class="spread"><h2>Boîte en plus</h2><button class="btn sm" id="closeSheet">Fermer</button></div>
+    <p class="small muted"><b>${esc(R[sp.r].n)}</b> · ${sp.where==="congel"?"au congélateur":"au frigo, à manger avant le "+fmtLong(spareEnd(sp))}</p>
+    <h3 style="margin:14px 0 8px">Elle remplace quel repas ?</h3>
+    ${T.length?`<div class="stack" style="gap:6px">${T.slice(0,12).map(t=>`<button class="opt" data-spuse="${sp.id}|${t.d}|${t.k}"><b>${dShort(parse(t.d))} · ${CAT[t.x.cat].n} : ${esc(R[t.x.r].n)}</b><span class="ings">${t.fresh?"Ne sera pas cuisiné ce jour-là":"La session du "+fmtLong(t.when)+" en fera une boîte de moins"} : les aliments restent au placard.</span></button>`).join("")}</div>`
+      :`<p class="small">Pas de repas à remplacer avant ${sp.where==="congel"?"3 semaines":"qu'elle ne soit plus bonne"} : les prochains sont déjà cuisinés. Mange-la en plus, ou mets-la au congélateur.</p>`}
+    <div class="row" style="margin-top:14px">${sp.where==="frigo"?`<button class="btn sm" data-spfz="${sp.id}">La mettre au congélateur</button>`:""}<button class="btn sm ghost" data-spdel="${sp.id}">Mangée en plus ou jetée</button></div>
+  </div></div>`;
+}
+function spareBlock(){
+  const L=(S.spare||[]); if(!L.length) return "";
+  const free=L.filter(s=>!s.use), used=L.filter(s=>s.use&&s.use.split("|")[0]>=iso(TODAY));
+  if(!free.length&&!used.length) return "";
+  return `<div class="card" style="margin-bottom:12px"><b>Boîtes en plus</b><p class="small muted">Des repas pas mangés, encore bons.</p>
+    ${free.map(s=>`<div class="spread" style="margin-top:8px;gap:8px"><span class="small"><b>${esc(R[s.r].n)}</b><br><span class="muted">${s.where==="congel"?"Congélateur":"Frigo, avant le "+fmtLong(spareEnd(s))}</span></span><button class="btn sm primary" data-spopen="${s.id}">Quand la manger ?</button></div>`).join("")}
+    ${used.map(s=>{ const [d]=s.use.split("|"); return `<div class="spread" style="margin-top:8px;gap:8px"><span class="small"><b>${esc(R[s.r].n)}</b><br><span class="muted">Prévue ${fmtLong(parse(d))}</span></span><button class="btn sm" data-spundo="${s.id}">Annuler</button></div>`; }).join("")}</div>`;
+}
+/* ---------- Catalogue : je choisis mes repas de la semaine ---------- */
+const PICK_KEYS = {B:["B0","B1","B2"],C:["CM0","CA0","CM1","CA1","CM2","CA2"],L:["L0","L1","L2"],D:["D0","D1","D2"]};
+const slotLabel = (ws,k) => { const s=+k.slice(-1), a=addDays(ws,BLOCK_START[s]), b=addDays(ws,BLOCK_START[s]+BLOCK_LEN[s]-1), f=d=>DAYS[(d.getDay()+6)%7].slice(0,3).toLowerCase()+". "+d.getDate();
+  return (k.startsWith("CM")?"Matin ":k.startsWith("CA")?"Aprèm ":"")+f(a)+" – "+f(b); };
+// déjà commencé ou déjà cuisiné : on n'y touche plus
+function lockedKey(ws,k){
+  const s=+k.slice(-1), first=addDays(ws,BLOCK_START[s]), cat=catOfKey(k);
+  if(first<=TODAY) return true;
+  const cv=covers()[cat];
+  for(let i=0;i<BLOCK_LEN[s];i++){ const c=cv[iso(addDays(ws,BLOCK_START[s]+i))]; if(c&&parse(c.date)<=TODAY) return true; }
+  if(cat==="L"||cat==="D"){ const n=s<2?1:2, sd=sessionsFor(ws)["s"+n]; if(sd&&(sd<TODAY||started(sessionKey(ws,n)))) return true; }
+  return false;
+}
+function initMP(wsI){
+  const ws=parse(wsI), P=S.picks&&S.picks[wsI], sel={};
+  Object.entries(PICK_KEYS).forEach(([c,keys])=>{ sel[c]=P?keys.filter(k=>!lockedKey(ws,k)&&P[k]).map(k=>P[k]):[]; });
+  return {ws:wsI,sel};
+}
+const portionPrice = r => Object.entries(R[r].i).reduce((a,[id,q])=>a+q*UP(id),0);
+function renderMenu(){
+  const V=view.mp, ws=parse(V.ws), w=weekIndex(ws), {s}=stockAt(TODAY), back=`<button class="btn sm" data-go="${view.prev||"shop"}">‹ Retour</button>`;
+  const guards=Array.from({length:7},(_,i)=>addDays(ws,i)).filter(d=>{ const g=gType(d); return g==="J"||g==="G"; });
+  let html=`<div class="spread" style="margin:6px 0 4px">${back}<span class="small muted">${S.picks&&S.picks[V.ws]?"Menu déjà choisi":"Pas encore choisi"}</span></div>`+header("Choisis tes repas",`Semaine du ${fmtLong(ws)} : les 35 recettes du PDF : prends ce qui te fait envie, autant de fois que tu veux. Ce que tu ne choisis pas reste le menu du coach.`);
+  html+=`<div class="weeknav"><button class="btn sm" data-mpw="-1" ${addDays(ws,-7)<planWeek(TODAY)?"disabled":""}>‹ Préc.</button><div class="mid"><b>Semaine du ${fmt(ws)}</b></div><button class="btn sm" data-mpw="1">Suiv. ›</button></div>`;
+  html+=`<div class="row" style="margin:10px 0"><button class="btn sm" data-mpcoach="1">Partir du menu du coach</button><button class="btn sm ghost" data-mpclear="1">Tout effacer</button></div>`;
+  let cost=0;
+  [["B","Petits-déjeuners","500 kcal"],["C","Collations","250 kcal, 2 par jour"],["L","Déjeuners","700 kcal"],["D","Dîners","850 kcal"]].forEach(([c,t,k])=>{
+    const keys=PICK_KEYS[c], free=keys.filter(x=>!lockedKey(ws,x)), lock=keys.filter(x=>lockedKey(ws,x)), sel=V.sel[c], full=sel.length>=free.length;
+    sel.forEach((r,i)=>{ if(free[i]) cost+=portionPrice(r)*BLOCK_LEN[+free[i].slice(-1)]; });
+    html+=`<h2 class="cat-${c}" style="margin:22px 0 4px">${t} <span class="small muted" style="font-weight:500">· ${k}</span></h2>
+      <p class="small ${full?"":"muted"}" style="margin:0 0 8px">${free.length?`<b class="num">${sel.length}/${free.length}</b> choisi${sel.length>1?"s":""}${(c==="L"||c==="D")?" · chaque choix = 2 ou 3 jours de boîtes":""}`:"Tout est déjà préparé ou commencé pour cette semaine."}</p>`;
+    if(c==="C"&&guards.length) html+=`<p class="small muted" style="margin:0 0 8px">Garde le ${guards.map(dShort).join(", ")} : prends des collations « Sans frigo » pour ces jours-là.</p>`;
+    if(free.length){
+      html+=`<div class="pkgrid">${Object.keys(R).filter(id=>R[id].c===c&&!banned(id).length).map(id=>{ const n=sel.filter(x=>x===id).length, mi=missIn(id,s);
+        return `<div class="pk cat-${c} ${n?"on":""}"><b>${esc(R[id].n)}</b><span class="ings">${esc(ingLine(id))}</span>
+          <span class="meta"><span>≈ ${euro(portionPrice(id))}</span>${NOMADE.has(id)?"<span>Sans frigo</span>":""}${!mi.length?"<span>Au placard ✓</span>":""}</span>
+          <div class="stepper"><button data-mpm="${c}|${id}" ${n?"":"disabled"} aria-label="Retirer ${esc(R[id].n)}">−</button><span class="n num">${n}</span><button data-mpp="${c}|${id}" ${full?"disabled":""} aria-label="Ajouter ${esc(R[id].n)}">+</button></div></div>`; }).join("")}</div>`;
+    }
+    html+=`<ul class="assign">${lock.map(x=>`<li class="muted">${slotLabel(ws,x)} : ${esc(R[mealsFor(addDays(ws,BLOCK_START[+x.slice(-1)])).list.find(y=>y.k===x).r].n)} (déjà prévu)</li>`).join("")}${free.map((x,i)=>`<li>${slotLabel(ws,x)} : ${sel[i]?`<b>${esc(R[sel[i]].n)}</b>`:`<span class="muted">menu du coach (${esc(R[defaultFor(w,x)].n)})</span>`}</li>`).join("")}</ul>`;
+  });
+  html+=`<div class="card" style="margin-top:20px"><div class="spread"><span>Coût de tes choix</span><b class="num">≈ ${euro(cost)}</b></div><p class="small muted">Prix repères ou ceux de tes tickets, pour les repas choisis. La liste de courses retire ce qui est déjà au placard.</p>
+    <button class="btn primary" style="width:100%;margin-top:10px" data-mpgo="1">Valider mon menu</button>
+    ${S.picks&&S.picks[V.ws]?`<button class="btn ghost" style="width:100%;margin-top:6px" data-mpreset="1">Revenir au menu du coach</button>`:""}</div>`;
+  return html;
+}
+function saveMP(){
+  const V=view.mp, ws=parse(V.ws), old=(S.picks&&S.picks[V.ws])||{}, P={};
+  Object.entries(PICK_KEYS).forEach(([c,keys])=>{ const free=keys.filter(k=>!lockedKey(ws,k));
+    keys.filter(k=>lockedKey(ws,k)).forEach(k=>{ if(old[k]) P[k]=old[k]; });
+    free.forEach((k,i)=>{ if(V.sel[c][i]) P[k]=V.sel[c][i]; }); });
+  S.picks=S.picks||{}; S.picks[V.ws]=P; save();
+}
+function defaultFor(w,key){
+  const m=key.match(/^(B|CM|CA|L|D)(\d)$/), t=m[1], n=+m[2];
+  if(t==="B") return BRK[w][n];
+  if(t==="CM") return CMS[w][n];
+  if(t==="CA") return CAS[w][n];
+  if(t==="L") return LUNCH[w][n];
+  return DINNER[w][n];
+}
+function closeSheet(){ $("#sheetRoot").innerHTML=""; view.jc=null; }
+
+/* ---------- « Je cuisine » : choisir les jours à préparer ---------- */
+// un jour est déjà préparé s'il est couvert par une autre session « Je cuisine » ou par une session prévue commencée
+function prepared(day){
+  const k=iso(day), c=coverOf("LD")[k]; if(c) return "prévu le "+fmt(parse(c.date));
+  const ws=planWeek(day), i=Math.round((day-ws)/864e5), n=i<4?1:2, key=sessionKey(ws,n);
+  if(started(key) && sessionsFor(ws)["d"+n].includes(i)) return "session "+n+" commencée";
+  return "";
+}
+function jcCard(){
+  const list=customs().filter(c=>c.date>=iso(TODAY)||!sessionDone(c.id)).sort((a,b)=>a.date<b.date?-1:1);
+  return `<div class="card"><div class="spread"><div><b>Je cuisine</b><p class="small muted">Pour aujourd'hui, demain ou plusieurs jours d'un coup.</p></div><button class="btn primary sm" data-jc="1">Je cuisine…</button></div>
+    ${list.map(c=>{ const d=sessionDone(c.id); return `<div class="spread" style="margin-top:10px;gap:8px;align-items:flex-start"><span class="small"><b>${fmtLong(parse(c.date)).replace(/^./,x=>x.toUpperCase())}${d?" ✓":""}</b><br><span class="muted">${esc(datesTxt(c.days.map(parse)))}</span></span><span class="row" style="flex-wrap:nowrap"><button class="btn sm" data-cook="${c.id}">${d?"Revoir":"Ouvrir"}</button><button class="btn sm ghost" data-cdel="${c.id}">${view.cdelArm===c.id?"Confirmer":"Supprimer"}</button></span></div>`; }).join("")}</div>`;
+}
+function openJC(){
+  if(!view.jc) view.jc={date:iso(TODAY),days:[],parts:{B:1,C:1,L:1,D:1}};
+  const J=view.jc, cd=parse(J.date), st=startDate(), from=cd<st?st:cd;
+  const days=Array.from({length:10},(_,i)=>addDays(from,i));
+  const free=d=>!prepared(d);
+  const isToday=J.date===iso(TODAY), sun=addDays(cd,((7-(cd.getDay()||7))||7));
+  const Q=[["0",isToday?"Aujourd'hui":"Demain",[cd]],["1",isToday?"Demain":"Après-demain",[addDays(cd,1)]],["3","3 jours",[1,2,3].map(i=>addDays(cd,i))],["w","Jusqu'à dimanche",Array.from({length:Math.round((sun-cd)/864e5)},(_,i)=>addDays(cd,i+1))]];
+  const sel=new Set(J.days), nDays=J.days.length, P=J.parts;
+  const boxes=nDays*((P.L?1:0)+(P.D?1:0)), pots=nDays*((P.B?1:0)+(P.C?2:0));
+  const fz=boxes?J.days.filter(d=>Math.round((parse(d)-cd)/864e5)>FRIDGE_DAYS):[];
+  $("#sheetRoot").innerHTML=`<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true" aria-label="Je cuisine">
+    <div class="spread"><h2>Je cuisine</h2><button class="btn sm" id="closeSheet">Fermer</button></div>
+    <span class="eyebrow">Quand ?</span>
+    <div class="seg" role="group" aria-label="Jour de la cuisine"><button data-jcd="${iso(TODAY)}" aria-pressed="${isToday}">Aujourd'hui</button><button data-jcd="${iso(addDays(TODAY,1))}" aria-pressed="${!isToday}">Demain</button></div>
+    <span class="eyebrow" style="margin-top:6px">Pour quels jours ?</span>
+    <div class="picks">${Q.map(([k,l,ds])=>{ const ok=ds.filter(d=>d>=st&&free(d)); return `<button class="chip" data-jcq="${ok.map(iso).join(",")}" ${ok.length?"":"disabled"}>${l}</button>`; }).join("")}</div>
+    <div class="dgrid">${days.map(d=>{ const why=prepared(d); return `<button class="dbtn" data-jcday="${iso(d)}" aria-pressed="${sel.has(iso(d))}" ${why?"disabled":""}>${dShort(d)}<small>${why?esc(why):Math.round((d-cd)/864e5)>FRIDGE_DAYS?"congélateur":gType(d)?GT[gType(d)].s:"&nbsp;"}</small></button>`; }).join("")}</div>
+    <span class="eyebrow" style="margin-top:6px">Quoi ?</span>
+    <div class="picks">${[["B","Petits-déj"],["C","Collations"],["L","Déjeuner"],["D","Dîner"]].map(([k,l])=>`<button class="chip" data-jcp="${k}" aria-pressed="${!!P[k]}" style="${P[k]?"border-color:var(--ok)":""}">${P[k]?"✓ ":""}${l}</button>`).join("")}</div>
+    ${(P.L?1:0)+(P.D?1:0)===1?`<p class="small">Le ${P.L?"dîner":"déjeuner"} de ces jours n'est pas préparé à l'avance : tu le cuisineras ${P.L?"le soir même":"le midi"}, avec une mini-session guidée pour 1 portion.</p>`:""}
+    ${fz.length?`<p class="small">Les boîtes du ${fz.map(d=>dShort(parse(d))).join(", ")} iront au congélateur (plus de 4 jours). Tu auras un rappel la veille pour les sortir.</p>`:""}
+    <p class="small muted">La session prévue pour ces jours se raccourcit ou disparaît. La liste de courses et le placard suivent.</p>
+    <button class="btn primary" data-jcgo="1" ${nDays&&(P.L||P.D||P.B||P.C)?"":"disabled"}>${nDays?"→ "+[boxes?boxes+(boxes>1?" boîtes":" boîte"):"",pots?pots+" portions petit-déj et collations":""].filter(Boolean).join(" + ")+" · Lancer la session guidée":"Choisis au moins un jour"}</button>
+  </div></div>`;
+}
+
+/* ---------- Événements ---------- */
+document.addEventListener("click",async e=>{
+  const t=e.target.closest("button,[data-item]"); if(!t){ if(e.target.id==="scrim") closeSheet(); return; }
+  if(t.dataset.tab){ view.tab=t.dataset.tab; try{location.hash=view.tab;}catch(_){} render(); window.scrollTo(0,0); return; }
+  if(t.dataset.go){ view.tab=t.dataset.go; try{location.hash=view.tab;}catch(_){} render(); window.scrollTo(0,0); return; }
+  if(t.dataset.guard){ const k=t.dataset.guard, n=nextType(gType(parse(k))); if(n) S.guards[k]=n; else delete S.guards[k]; save(); render(); return; }
+  if(t.dataset.paint){ view.paint=t.dataset.paint; render(); return; }
+  if(t.dataset.mo){ view.month=new Date(view.month.getFullYear(),view.month.getMonth()+(+t.dataset.mo),1); render(); return; }
+  if(t.dataset.day){ const k=t.dataset.day, p=view.paint; if(p==="X"||gType(parse(k))===p) delete S.guards[k]; else S.guards[k]=p; save(); render(); return; }
+  if(t.dataset.wk){ view.week=addDays(view.week,7*(+t.dataset.wk)); render(); return; }
+  if(t.dataset.swap){ const [w,k,c,r,wsI]=t.dataset.swap.split("|"); openSwap(+w,k,c,r,wsI); return; }
+  if(t.dataset.pick){ const [w,k,id,keep,wsI]=t.dataset.pick.split("|"); const P=wsI&&S.picks&&S.picks[wsI];
+    if(P){ if(id==="__reset") delete P[k]; else P[k]=id; }
+    else { const key=w+"-"+k; if(id==="__reset"||(id===defaultFor(+w,k)&&!keep)) delete S.swaps[key]; else S.swaps[key]=id; }
+    save(); closeSheet(); render(); return; }
+  if(t.dataset.skip){ const [d,k]=t.dataset.skip.split("|"); view.sk={d,k,why:"",box:""}; openSkip(); return; }
+  if(t.dataset.skcook!==undefined){ view.sk.cooked=+t.dataset.skcook; if(view.sk.cooked===0) view.sk.box=""; openSkip(); return; }
+  if(t.dataset.dsw){ const [d,p,cat,r]=t.dataset.dsw.split("|"); view.dsw={d,p,cat,r,days:[d]}; openDSW(); return; }
+  if(t.dataset.dswday){ const a=view.dsw.days, k=t.dataset.dswday, i=a.indexOf(k); if(i>=0){ if(a.length>1) a.splice(i,1); } else a.push(k); openDSW(); return; }
+  if(t.dataset.dswpick){ dswApply(t.dataset.dswpick); return; }
+  if(t.dataset.sdone){ const k=t.dataset.sdone; S.done=S.done||{}; if(sessionDone(k)){ S.done[k]=0; delete S.cook[k]; } else S.done[k]=1; save(); render(); return; }
+  if(t.dataset.snot){ S.done=S.done||{}; S.done[t.dataset.snot]=0; save(); render(); return; }
+  if(t.dataset.have){ const k=iso(view.week), H=S.have[k]=S.have[k]||{}, id=t.dataset.have, x=shopList(view.week).find(y=>y.id===id); H[id]=x&&x.have?0:1; if(S.cnt&&S.cnt[k]) delete S.cnt[k][id]; save(); render(); return; }
+  if(t.dataset.cnt){ const [id,dv]=t.dataset.cnt.split("|"), k=iso(view.week); S.cnt=S.cnt||{}; const C=S.cnt[k]=S.cnt[k]||{};
+    let n=cntOf(view.week,id); if(n===null) n=0; n=Math.max(0,n+(+dv)); C[id]=n; if(S.have[k]) delete S.have[k][id]; save(); render(); return; }
+  if(t.dataset.dataexp){ dataExport(); return; }
+  if(t.dataset.dataimp){ openImport(); return; }
+  if(t.dataset.dataimpgo){ dataImport(); return; }
+  if(t.dataset.dislike){ const id=t.dataset.dislike; S.ban=S.ban||{}; if(S.ban[id]) delete S.ban[id]; else S.ban[id]=1; view.dislikeOpen=1; save(); render(); return; }
+  if(t.dataset.skwhy){ view.sk.why=t.dataset.skwhy; openSkip(); return; }
+  if(t.dataset.skbox){ view.sk.box=t.dataset.skbox; openSkip(); return; }
+  if(t.dataset.skgo){ doSkip(); return; }
+  if(t.dataset.unskip){ unskip(t.dataset.unskip); return; }
+  if(t.dataset.spopen){ openSpare(t.dataset.spopen); return; }
+  if(t.dataset.spuse){ const [id,d,k]=t.dataset.spuse.split("|"), sp=S.spare.find(s=>s.id===id); if(sp) sp.use=d+"|"+k; save(); closeSheet(); render(); return; }
+  if(t.dataset.spundo){ const sp=(S.spare||[]).find(s=>s.id===t.dataset.spundo); if(sp) sp.use=null; save(); render(); return; }
+  if(t.dataset.spfz){ const sp=S.spare.find(s=>s.id===t.dataset.spfz); if(sp) sp.where="congel"; save(); openSpare(sp.id); render(); return; }
+  if(t.dataset.spdel){ S.spare=S.spare.filter(s=>s.id!==t.dataset.spdel); save(); closeSheet(); render(); return; }
+  if(t.dataset.mp){ view.mp=initMP(t.dataset.mp); if(view.tab!=="menu") view.prev=view.tab; view.tab="menu"; render(); window.scrollTo(0,0); return; }
+  if(t.dataset.mpw){ const n=addDays(parse(view.mp.ws),7*(+t.dataset.mpw)); view.mp=initMP(iso(n)); render(); return; }
+  if(t.dataset.mpp){ const [c,id]=t.dataset.mpp.split("|"); view.mp.sel[c].push(id); render(); return; }
+  if(t.dataset.mpm){ const [c,id]=t.dataset.mpm.split("|"), a=view.mp.sel[c], i=a.lastIndexOf(id); if(i>=0) a.splice(i,1); render(); return; }
+  if(t.dataset.mpclear){ Object.keys(view.mp.sel).forEach(c=>view.mp.sel[c]=[]); render(); return; }
+  if(t.dataset.mpcoach){ const ws=parse(view.mp.ws), w=weekIndex(ws); Object.entries(PICK_KEYS).forEach(([c,keys])=>view.mp.sel[c]=keys.filter(k=>!lockedKey(ws,k)).map(k=>defaultFor(w,k))); render(); return; }
+  if(t.dataset.mpgo){ saveMP(); view.week=parse(view.mp.ws); view.tab="shop"; view.mp=null; render(); window.scrollTo(0,0); return; }
+  if(t.dataset.mpreset){ delete S.picks[view.mp.ws]; save(); view.mp=initMP(view.mp.ws); render(); return; }
+  if(t.dataset.ban){ S.ban=S.ban||{}; S.ban[t.dataset.ban]=1; save(); closeSheet(); render(); return; }
+  if(t.dataset.unban){ delete S.ban[t.dataset.unban]; save(); render(); return; }
+  if(t.dataset.banadd){ openBan(); return; }
+  if(t.id==="closeSheet"){ closeSheet(); return; }
+  // je cuisine
+  if(t.dataset.jc){ view.jc=null; openJC(); return; }
+  if(t.dataset.jcd){ const J=view.jc; J.date=t.dataset.jcd; J.days=J.days.filter(d=>d>=J.date); openJC(); return; }
+  if(t.dataset.jcq!==undefined){ view.jc.days=t.dataset.jcq?t.dataset.jcq.split(","):[]; openJC(); return; }
+  if(t.dataset.jcday){ const J=view.jc, k=t.dataset.jcday; J.days=J.days.includes(k)?J.days.filter(d=>d!==k):[...J.days,k].sort(); openJC(); return; }
+  if(t.dataset.jcp){ const P=view.jc.parts, k=t.dataset.jcp; P[k]=P[k]?0:1; openJC(); return; }
+  if(t.dataset.jcgo){ const J=view.jc; if(!J||!J.days.length) return; const id="c"+Date.now().toString(36);
+    S.custom=S.custom||[]; S.custom.push({id,date:J.date,days:[...J.days].sort(),parts:{...J.parts}}); save(); closeSheet();
+    unlockAudio(); view.prev=view.tab==="cook"?view.prev:view.tab; view.cook=id; view.tab="cook"; render(); window.scrollTo(0,0); return; }
+  if(t.dataset.cdel){ const id=t.dataset.cdel; if(view.cdelArm!==id){ view.cdelArm=id; render(); return; }
+    S.custom=(S.custom||[]).filter(c=>c.id!==id); delete S.cook[id]; view.cdelArm=null; save(); render(); return; }
+  if(t.dataset.habit){ const d=iso(TODAY); const h=S.habits[d]=S.habits[d]||{}; h[t.dataset.habit]=h[t.dataset.habit]?0:1; save(); render(); return; }
+  if(t.dataset.water){ const d=iso(TODAY); const h=S.habits[d]=S.habits[d]||{}; const n=+t.dataset.water; h.w=(h.w===n?n-1:n); save(); render(); return; }
+  if(t.id==="hideDone"){ view.hideDone=!view.hideDone; render(); return; }
+  if(t.id==="resetShop"){ delete S.shop[iso(view.week)]; save(); render(); return; }
+  if(t.id==="copyList"){
+    const list=shopList(view.week).filter(x=>!x.have);
+    const groups={}; list.forEach(x=>(groups[x.aisle]=groups[x.aisle]||[]).push(x));
+    let txt="Courses semaine du "+fmt(view.week)+"\n";
+    Object.keys(AISLES).forEach(g=>{ if(!groups[g])return; txt+="\n"+AISLES[g]+"\n"; groups[g].forEach(x=>{ txt+="- "+x.name+" : "+x.label+"\n"; }); });
+    try{ await navigator.clipboard.writeText(txt); $("#copyMsg").textContent="Liste copiée"; }
+    catch(_){ $("#copyMsg").textContent="Copie impossible ici : sélectionne la liste à la main"; }
+    return;
+  }
+  if(t.id==="shopToStock"){
+    const k=iso(view.week), c=S.shop[k]||{}, d=iso(TODAY);
+    shoppingFor(view.week).forEach(x=>{ if(c[x.id]&&x.rest>0){ S.inv.push({d,id:x.id,q:x.units,src:"liste"}); delete c[x.id]; } });
+    save(); render(); return;
+  }
+  // session guidée
+  if(t.dataset.cook){ unlockAudio(); view.prev=view.tab==="cook"?view.prev:view.tab; view.cook=t.dataset.cook; view.tab="cook"; render(); window.scrollTo(0,0); return; }
+  if(t.dataset.step){ unlockAudio(); const k=view.cook, c=S.cook[k]=S.cook[k]||{}, id=t.dataset.step; if(c[id]) delete c[id]; else c[id]=1; save(); render(); return; }
+  if(t.dataset.cookreset){ delete S.cook[view.cook]; save(); render(); return; }
+  if(t.dataset.timer){ unlockAudio(); const [id,min,...lab]=t.dataset.timer.split("|"); timers=timers.filter(x=>x.id!==id); timers.push({id,label:lab.join("|"),end:Date.now()+(+min)*60000}); saveTimers(); render(); return; }
+  if(t.dataset.tstop){ timers=timers.filter(x=>x.id!==t.dataset.tstop); saveTimers(); if(view.tab==="cook") render(); else renderTimers(); return; }
+  // recettes / conseils
+  if(t.dataset.sub){ view.rsub=t.dataset.sub; render(); return; }
+  // placard
+  if(t.dataset.inv){ openInv(t.dataset.inv); return; }
+  if(t.dataset.invadd){ openInv(null); return; }
+  if(t.dataset.invsave!==undefined){
+    const q=parseFloat(($("#invQty").value||"").replace(",",".")); if(!(q>=0)){ $("#invQty").focus(); return; }
+    const id=t.dataset.invsave||$("#invSel").value;
+    if(t.dataset.invsave) invSet(id,q); else { S.inv.push({d:iso(TODAY),id,q,src:"manuel"}); save(); }
+    closeSheet(); render(); return;
+  }
+  if(t.dataset.invzero){ invSet(t.dataset.invzero,0); closeSheet(); render(); return; }
+  if(t.dataset.invunk){ invSet(t.dataset.invunk,null); closeSheet(); render(); return; }
+  // tickets
+  if(t.dataset.tkmanual){ view.draft={store:"",d:iso(TODAY),total:null,lines:[{label:"",id:"",q:"",price:""}]}; render(); return; }
+  if(t.dataset.dladd){ view.draft.lines.push({label:"",id:"",q:"",price:""}); render(); return; }
+  if(t.dataset.dlrm){ view.draft.lines.splice(+t.dataset.dlrm,1); render(); return; }
+  if(t.dataset.dcancel){ view.draft=null; render(); return; }
+  if(t.dataset.dsave){ saveDraft(); window.scrollTo(0,0); return; }
+  if(t.dataset.tkdel){ const id=t.dataset.tkdel; if(view.delArm!==id){ view.delArm=id; render(); return; }
+    S.receipts=S.receipts.filter(r=>r.id!==id); S.inv=S.inv.filter(e=>e.src!==id); view.delArm=null; save(); render(); return; }
+  if(t.dataset.tkai){ if(!view.aiBusy) askTips(t.dataset.tkai); return; }
+});
+document.addEventListener("input",e=>{
+  const t=e.target, dr=view.draft; if(!dr) return;
+  if(t.dataset.df){ dr[t.dataset.df]=t.dataset.df==="total"?(t.value===""?null:t.value):t.value; return; }
+  if(t.dataset.dl){ const [i,f]=t.dataset.dl.split("|"); if(f!=="id"){ dr.lines[+i][f]=t.value; const el=$("#dsum"); if(el&&f==="price") el.textContent="Somme des lignes : "+euro(draftSum()); } }
+});
+document.addEventListener("change",e=>{
+  const t=e.target;
+  if(t.id==="tkFile" && t.files && t.files[0]){ readReceipt(t.files[0]); t.value=""; return; }
+  if(t.id==="invSel"){ const u=ING[t.value][2]; $("#invUnit").textContent="("+(u==="pc"?"pièces":u)+")"; return; }
+  if(t.dataset.dl && t.dataset.dl.endsWith("|id")){ const l=view.draft.lines[+t.dataset.dl.split("|")[0]]; l.id=t.value; if(l.id&&!(+l.q>0)){ const f=fmts(l.id)[0]; l.q=Math.round(f.s||f.pw||1); } render(); return; }
+  if(t.dataset.item){ const k=iso(view.week); const c=S.shop[k]=S.shop[k]||{}; if(t.checked) c[t.dataset.item]=1; else delete c[t.dataset.item]; save(); render(); return; }
+  if(t.id==="startDate" && t.value){ S.start=t.value; S.firstCook=""; S.bought=""; save(); render(); }
+});
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeSheet(); });
+function fromHash(){ const h=(location.hash||"").slice(1); if(h==="advice"){ view.tab="recipes"; view.rsub="advice"; } else if(TABS.some(([k])=>k===h)) view.tab=h; }
+window.addEventListener("hashchange",()=>{ fromHash(); render(); });
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden&&view.tab==="cook") keepAwake(true); });
+try{ const raw=localStorage.getItem("plan-stephane"); load(raw?JSON.parse(raw):{}); }catch(e){ load({}); }
+fromHash();
+render();
+initDb();
+initSample();
+</script>
