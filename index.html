@@ -587,6 +587,7 @@ let dbRef=null, saveTimer=null, writeChain=Promise.resolve(), lastSaved="", sync
 function save(){
   resetSubs();
   try{ localStorage.setItem("plan-stephane",JSON.stringify(S)); }catch(e){}
+  if(gh&&gh.id) ghPushSoon();
   if(!dbRef) return;
   clearTimeout(saveTimer);
   saveTimer=setTimeout(()=>{
@@ -595,7 +596,68 @@ function save(){
     writeChain=writeChain.then(()=>dbRef.set(body)).then(()=>{lastSaved=str;setSync("Synchronisé");}).catch(()=>setSync("Pas de connexion : enregistré sur cet appareil"));
   },700);
 }
-function setSync(t){ syncMsg=t; const el=document.getElementById("sync"); if(el) el.textContent=t; }
+function setSync(t){ syncMsg=t; const el=document.getElementById("sync"); if(el) el.textContent=t; const m=document.getElementById("ghState"); if(m) m.textContent=t; }
+/* ---------- Synchro du site (hors claude.ai) : un gist privé de ton compte GitHub ---------- */
+const GH={file:"plan-alimentaire.json",desc:"Plan alimentaire · synchro (ne pas supprimer)"};
+let gh=null, ghT=0, ghPushTimer=null, ghDirty=false, ghBusy=false;
+try{ gh=JSON.parse(localStorage.getItem("plan-gh")||"null"); ghT=+localStorage.getItem("plan-gh-t")||0; }catch(e){}
+const hhmm = () => new Date().toTimeString().slice(0,5);
+const ghErr = e => setSync(e&&e.code===401?"Synchro : clé GitHub refusée (Mes données)":"Pas de connexion : enregistré sur cet appareil");
+const ghSetT = t => { ghT=t; try{ localStorage.setItem("plan-gh-t",String(t)); }catch(e){} };
+function ghApi(path,opt){
+  return fetch("https://api.github.com"+path,Object.assign({cache:"no-store"},opt||{},{headers:{Authorization:"Bearer "+gh.token,Accept:"application/vnd.github+json","Content-Type":"application/json"}}))
+    .then(r=>{ if(!r.ok) throw {code:r.status}; return r.json(); });
+}
+async function ghRead(){
+  const g=await ghApi("/gists/"+gh.id), f=g.files&&g.files[GH.file]; if(!f) return null;
+  const txt=f.truncated ? await fetch(f.raw_url,{cache:"no-store"}).then(r=>r.text()) : f.content;
+  return JSON.parse(txt);
+}
+function ghPushSoon(){ ghDirty=true; clearTimeout(ghPushTimer); ghPushTimer=setTimeout(ghPush,1500); }
+async function ghPush(){
+  if(!gh||!gh.id) return; if(ghBusy){ ghPushSoon(); return; }
+  ghBusy=true; const t=Date.now();
+  try{ await ghApi("/gists/"+gh.id,{method:"PATCH",body:JSON.stringify({files:{[GH.file]:{content:JSON.stringify({t,data:S})}}})}); ghSetT(t); ghDirty=false; setSync("Synchronisé PC ↔ téléphone · "+hhmm()); }
+  catch(e){ ghErr(e); }
+  ghBusy=false;
+}
+async function ghPull(){
+  if(!gh||!gh.id||ghDirty||ghBusy) return; ghBusy=true;
+  try{ const r=await ghRead();
+    if(r&&r.data&&r.t>ghT&&!ghDirty){ ghSetT(r.t); load(r.data); try{ localStorage.setItem("plan-stephane",JSON.stringify(S)); }catch(e){} if(!view.draft&&!document.getElementById("scrim")) render(); }
+    setSync("Synchronisé PC ↔ téléphone · "+hhmm()); }
+  catch(e){ ghErr(e); }
+  ghBusy=false;
+}
+async function ghConnect(token){
+  gh={token};
+  try{
+    const list=await ghApi("/gists?per_page=100"), g=list.find(x=>x.files&&x.files[GH.file]);
+    if(g){ gh.id=g.id; localStorage.setItem("plan-gh",JSON.stringify(gh)); ghSetT(0); await ghPull(); return "found"; }
+    const t=Date.now(), c=await ghApi("/gists",{method:"POST",body:JSON.stringify({description:GH.desc,public:false,files:{[GH.file]:{content:JSON.stringify({t,data:S})}}})});
+    gh.id=c.id; localStorage.setItem("plan-gh",JSON.stringify(gh)); ghSetT(t); setSync("Synchronisé PC ↔ téléphone · "+hhmm()); return "new";
+  }catch(e){ gh=null; throw e; }
+}
+function ghStart(){
+  if(window.claude&&window.claude.use) return;
+  const tick=()=>{ if(gh&&gh.id&&!document.hidden) ghPull(); };
+  document.addEventListener("visibilitychange",tick); window.addEventListener("focus",tick); window.addEventListener("online",()=>{ if(ghDirty) ghPush(); tick(); });
+  setInterval(tick,30000); tick();
+}
+function ghBlock(){
+  if(window.claude&&window.claude.use) return `<p class="small muted" style="margin-top:10px">Ici (claude.ai), la synchro entre appareils est automatique.</p>`;
+  if(gh&&gh.id) return `<div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--line)"><b>Synchro PC ↔ téléphone : active ✓</b><p class="small muted" id="ghState">${esc(syncMsg)}</p>
+    <div class="row" style="margin-top:6px"><button class="btn sm" data-ghnow="1">Synchroniser maintenant</button><button class="btn sm ghost" data-ghoff="1">Déconnecter cet appareil</button></div></div>`;
+  return `<div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--line)"><b>Synchro PC ↔ téléphone</b>
+    <p class="small muted">Tes données sont rangées dans un fichier privé de ton compte GitHub. À faire une fois, puis coller la même clé sur l'autre appareil :</p>
+    <ol class="small" style="padding-left:18px;margin:6px 0">
+      <li>Ouvre <a href="https://github.com/settings/tokens/new?scopes=gist&description=Plan%20alimentaire" target="_blank" rel="noopener">ce lien GitHub</a> (connecte-toi si besoin).</li>
+      <li>« Expiration » : choisis <b>No expiration</b>. Laisse seulement « gist » coché.</li>
+      <li>En bas, <b>Generate token</b>, puis copie la clé (elle commence par ghp_).</li>
+      <li>Colle-la ici, puis « Connecter ». Garde-la dans tes notes pour l'autre appareil.</li></ol>
+    <input id="ghTok" type="password" autocomplete="off" placeholder="ghp_…" style="width:100%;font:inherit;padding:8px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink)">
+    <button class="btn primary sm" style="margin-top:8px" data-ghgo="1">Connecter</button><p class="small" id="ghMsg" style="margin-top:6px"></p></div>`;
+}
 async function initDb(){
   try{
     if(!window.claude||!window.claude.use) return;
@@ -1139,10 +1201,10 @@ function renderToday(){
     <div class="card">${kcalBar()}${(()=>{ const sk=m.list.filter(x=>skipOf(iso(m.date),x.k)); if(!sk.length) return ""; const miss=sk.reduce((a,x)=>a+CAT[x.cat].k,0);
       return `<p class="small" style="margin-top:8px">${sk.length} repas pas mangé${sk.length>1?"s":""} : ta journée fait ≈ <b>${(2550-miss).toLocaleString("fr-FR")} kcal</b> sur 2 550.</p>`; })()}</div>
     ${spareBlock()}
-    <details class="tk" style="margin-top:16px"><summary><b>Mes données</b><span class="small muted">sauvegarder ou transférer</span></summary><div class="in">
+    <details class="tk" style="margin-top:16px" ${view.dataOpen?"open":""}><summary><b>Mes données</b><span class="small muted">${!(window.claude&&window.claude.use)&&!(gh&&gh.id)?"synchro PC ↔ téléphone à activer":"sauvegarder ou transférer"}</span></summary><div class="in">
       <p class="small muted">Tes repas choisis, gardes, sessions et courses. Sauvegarde-les pour les garder en sécurité ou les mettre sur un autre appareil ou sur ton site.</p>
       <div class="row" style="margin-top:8px"><button class="btn sm primary" data-dataexp="1">Sauvegarder mes données</button><button class="btn sm" data-dataimp="1">Restaurer</button></div>
-      <p class="small muted" id="dataMsg" style="margin-top:6px"></p></div></details>
+      <p class="small muted" id="dataMsg" style="margin-top:6px"></p>${ghBlock()}</div></details>
     ${m.list.map((x,i)=>mealCard(x,times[i],m)).join("")}
     ${m.away?`<p class="small muted">Jour de garde : les collations passent en version sans frigo (galettes de riz, boules énergétiques, pomme-amandes) pour pouvoir manger vite entre deux interventions.</p>`:""}
     ${m.g==="N"?`<p class="small muted">Garde de nuit : mange bien avant de partir, prends ta boîte du dîner. En rentrant le matin, un petit-déj léger puis dodo.</p>`:""}
@@ -1917,6 +1979,14 @@ document.addEventListener("click",async e=>{
   if(t.dataset.have){ const k=iso(view.week), H=S.have[k]=S.have[k]||{}, id=t.dataset.have, x=shopList(view.week).find(y=>y.id===id); H[id]=x&&x.have?0:1; if(S.cnt&&S.cnt[k]) delete S.cnt[k][id]; save(); render(); return; }
   if(t.dataset.cnt){ const [id,dv]=t.dataset.cnt.split("|"), k=iso(view.week); S.cnt=S.cnt||{}; const C=S.cnt[k]=S.cnt[k]||{};
     let n=cntOf(view.week,id); if(n===null) n=0; n=Math.max(0,n+(+dv)); C[id]=n; if(S.have[k]) delete S.have[k][id]; save(); render(); return; }
+  if(t.dataset.ghgo){ const v=(document.getElementById("ghTok").value||"").trim(), m=document.getElementById("ghMsg");
+    if(!/^(ghp_|github_pat_)/.test(v)){ m.textContent="Colle la clé GitHub en entier (elle commence par ghp_)."; return; }
+    m.textContent="Connexion…"; t.disabled=true; view.dataOpen=1;
+    ghConnect(v).then(r=>{ render(); setSync(r==="found"?"Synchro active : données récupérées depuis ton autre appareil ✓":"Synchro active ✓ Colle la même clé sur ton autre appareil."); })
+      .catch(e=>{ t.disabled=false; m.textContent=e&&e.code===401?"Clé refusée : vérifie que tu l'as copiée en entier.":e&&e.code===403||e&&e.code===404?"Cette clé n'a pas le droit « gist » : recrée-la en cochant « gist ».":"Pas de connexion internet : réessaie."; });
+    return; }
+  if(t.dataset.ghnow){ view.dataOpen=1; setSync("Synchronisation…"); (ghDirty?ghPush():Promise.resolve()).then(()=>ghPull()); return; }
+  if(t.dataset.ghoff){ if(!confirm("Arrêter la synchro sur cet appareil ? Tes données restent ici et sur ton autre appareil.")) return; gh=null; try{ localStorage.removeItem("plan-gh"); localStorage.removeItem("plan-gh-t"); }catch(e){} setSync("Enregistré sur cet appareil"); view.dataOpen=1; render(); return; }
   if(t.dataset.dataexp){ dataExport(); return; }
   if(t.dataset.dataimp){ openImport(); return; }
   if(t.dataset.dataimpgo){ dataImport(); return; }
@@ -2022,4 +2092,5 @@ fromHash();
 render();
 initDb();
 initSample();
+ghStart();
 </script>
