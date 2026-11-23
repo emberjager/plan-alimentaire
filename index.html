@@ -244,6 +244,15 @@ nav.tabs button[aria-selected="true"]{color:var(--accent)}
 .dbtn:disabled{opacity:.55}
 .dbtn small{font-weight:500;color:var(--muted);font-size:.7rem;text-align:center}
 .picks{display:flex;flex-wrap:wrap;gap:6px}
+.trip{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.trip button{border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:6px 0;font:inherit;font-size:.78rem;font-weight:600;line-height:1.15;display:flex;flex-direction:column;align-items:center}
+.trip button span{font-size:1rem;font-weight:700}
+.trip button.in{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
+.trip button.end{background:var(--ok);border-color:var(--ok);color:#fff}
+.mday{padding:8px 0;border-top:1px solid var(--line)}
+.mday:first-child{border-top:0}
+.mday .ml{display:flex;gap:8px;font-size:.88rem;padding:2px 0}
+.mday .ml .k{color:var(--muted);min-width:5.2em;font-size:.8rem;padding-top:2px}
 .opt{text-align:left;background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
 .opt.cur{border-color:var(--accent)}
 .opt .ings{font-size:.82rem;color:var(--muted)}
@@ -895,7 +904,7 @@ function remindersFor(day){
   evM.tasks.forEach(x=>{ if(x.t==="fresh"){ const r=freshMeal(x.d,x.p), mt=meatOf(r); out.push(`Demain ${x.p==="D"?"soir":"midi"}, tu cuisines ton ${x.p==="D"?"dîner":"déjeuner"} (${R[r].n}).${mt.length?" Si "+mt.join(" et ")+" est au congélateur, passe-le au frigo ce soir.":""}`); } });
   { const nws=addDays(planWeek(day),7), dr=nws>=startDate()?sessionsFor(nws).drive:null;
     const chosen=Array.from({length:7},(_,i)=>iso(addDays(nws,i))).some(d=>S.dp&&S.dp[d]&&Object.keys(S.dp[d]).length);
-    if(dr && !chosen && dr>=day && (dr-day)/864e5<=2) out.push(`Choisis tes repas de la semaine du ${fmt(nws)} avant le drive (${fmtLong(dr)}) : onglet Semaine, touche un repas pour le changer. Sinon, ce sera le menu du coach.`); }
+    if(dr && !chosen && dr>=day && (dr-day)/864e5<=2) out.push(`Choisis tes repas de la semaine du ${fmt(nws)} avant le drive (${fmtLong(dr)}) : onglet Courses, « Ce que je mange ». Sinon, ce sera le menu du coach.`); }
   evM.tasks.forEach(x=>{ if(x.t==="cook") out.push("Demain : "+taskText(x).charAt(0).toLowerCase()+taskText(x).slice(1)+". Vérifie que tu as tous les ingrédients."); if(x.t==="drive") out.push("Demain : récupérer le drive."); });
   return out;
 }
@@ -1264,14 +1273,14 @@ function renderPlan(){
 }
 
 function renderWeek(){
-  const ws=view.week, w=weekIndex(ws), ses=sessionsFor(ws);
-  let html=header("Ma semaine",`Touche un repas pour le changer : tu choisis le plat et les jours. Un même plat sur plusieurs jours est cuisiné en une seule fois.`);
-  html+=`<div class="weeknav"><button class="btn sm" data-wk="-1" aria-label="Semaine précédente">‹ Préc.</button><div class="mid"><b>Semaine du ${fmt(ws)}</b><div class="small muted">Menu ${w+1} sur 4</div></div><button class="btn sm" data-wk="1" aria-label="Semaine suivante">Suiv. ›</button></div>`;
+  const ds=view.ds||TODAY, de=addDays(ds,6);
+  let html=header("Mes 7 jours",`Touche un repas pour le changer : tu choisis le plat et les jours. Un même plat sur plusieurs jours est cuisiné en une seule fois.`);
+  html+=`<div class="weeknav"><button class="btn sm" data-wk="-1" aria-label="7 jours avant">‹ Avant</button><div class="mid"><b>Du ${dShort(ds)} au ${dShort(de)}</b><div class="small muted">${iso(ds)===iso(TODAY)?"à partir d'aujourd'hui":`<button class="link" data-wk="0">Revenir à aujourd'hui</button>`}</div></div><button class="btn sm" data-wk="1" aria-label="7 jours après">Après ›</button></div>`;
   html+=`<div class="stack">`;
   html+=`<div class="row" style="margin-bottom:10px"><button class="btn primary sm" data-jc="1">Je cuisine…</button><button class="btn sm" data-go="plan">Calendrier des gardes</button></div>`;
-  { const sk=Object.entries(S.skip||{}).filter(([k])=>{ const d=k.split("|")[0]; return d>=iso(ws)&&d<=iso(addDays(ws,6)); });
+  { const sk=Object.entries(S.skip||{}).filter(([k])=>{ const d=k.split("|")[0]; return d>=iso(ds)&&d<=iso(de); });
     if(sk.length){ const by={}; sk.forEach(([,v])=>by[v.why]=(by[v.why]||0)+1); const kc=sk.reduce((a,[k])=>a+CAT[catOfKey(k.split("|")[1])].k,0);
-      html+=`<div class="card" style="margin-bottom:12px"><b>${sk.length} repas pas mangé${sk.length>1?"s":""} cette semaine</b><p class="small muted">${Object.entries(by).map(([w,n])=>esc(WHY[w]||w)+" : "+n).join(" · ")} · ≈ ${kc.toLocaleString("fr-FR")} kcal en moins</p>
+      html+=`<div class="card" style="margin-bottom:12px"><b>${sk.length} repas pas mangé${sk.length>1?"s":""} sur ces 7 jours</b><p class="small muted">${Object.entries(by).map(([w,n])=>esc(WHY[w]||w)+" : "+n).join(" · ")} · ≈ ${kc.toLocaleString("fr-FR")} kcal en moins</p>
         <ul class="small" style="margin:6px 0 0;padding-left:18px">${sk.sort().map(([k,v])=>{ const [d,kk]=k.split("|"), x=mealsFor(parse(d)).list.find(y=>y.k===kk); return `<li>${dShort(parse(d))} · ${x?esc(x.lab||CAT[x.cat].n):""} : ${x?esc(R[x.r].n):""}</li>`; }).join("")}</ul></div>`; } }
   const warn=n=>`<div class="session warn"><b>Session cuisine ${n} : pas de jour de repos disponible.</b><p class="small">Cuisine la veille au soir en rentrant de garde, utilise « Je cuisine » un autre jour, ou échange une recette contre une plus rapide (salade de riz au thon, wraps).</p></div>`;
   const sessBlock=key=>{
@@ -1282,21 +1291,21 @@ function renderWeek(){
       ${c.eggs?`<li>Œufs durs : ${c.eggs}</li>`:""}${c.balls?`<li>Boules énergétiques : ${c.balls} portion${c.balls>1?"s":""} (pour les gardes)</li>`:""}</ul>
       <p class="small muted" style="margin-top:6px">${c.freeze.length?`Les boîtes du ${c.freeze.map(dShort).join(", ")} vont au congélateur. Les autres : 4 jours maximum au frigo.`:"Laisse refroidir puis ferme les boîtes : 4 jours maximum au frigo."}</p></div>`;
   };
-  const cust=d=>customs().filter(c=>c.date===iso(d)).map(c=>sessBlock(c.id)).join("");
-  html+=cust(addDays(ws,-1));
-  if(ses.s1 && iso(ses.s1)===iso(addDays(ws,-1))) html+=sessBlock(sessionKey(ws,1));
-  if(!ses.s1 && !ses.gone1) html+=warn(1);
-  for(let d=0; d<7; d++){
-    const date=addDays(ws,d), m=mealsFor(date), today=iso(date)===iso(TODAY);
-    html+=cust(date);
-    if(ses.s1 && iso(ses.s1)===iso(date)) html+=sessBlock(sessionKey(ws,1));
-    if(d===4 && !ses.s2 && !ses.gone2) html+=warn(2);
-    html+=`<div class="day ${today?"today":""} ${m.g?"isguard":""}"><div class="spread"><b>${dayOf(ws,d)} ${fmt(date)}${today?' <span class="chip ok">Aujourd\'hui</span>':""}</b>
+  // sessions cuisine qui tombent sur ces jours (plan automatique + « Je cuisine »)
+  const sesAt={}, warnAt={};
+  for(let w=addDays(planWeek(ds),-7); w<=addDays(planWeek(de),7); w=addDays(w,7)){ if(w<startDate()) continue; const s=sessionsFor(w);
+    [1,2].forEach(n=>{ const d=s["s"+n]; if(d) (sesAt[iso(d)]=sesAt[iso(d)]||[]).push(sessionKey(w,n)); else if(!s["gone"+n]) warnAt[iso(addDays(w,n===1?0:4))]=n; }); }
+  customs().forEach(c=>(sesAt[c.date]=sesAt[c.date]||[]).push(c.id));
+  for(let i=0; i<7; i++){
+    const date=addDays(ds,i), k=iso(date); if(date<startDate()) continue;
+    const m=mealsFor(date), today=k===iso(TODAY);
+    if(warnAt[k]) html+=warn(warnAt[k]);
+    (sesAt[k]||[]).forEach(key=>{ html+=sessBlock(key); });
+    html+=`<div class="day ${today?"today":""} ${m.g?"isguard":""}"><div class="spread"><b>${DAYS[(date.getDay()+6)%7]} ${fmt(date)}${today?' <span class="chip ok">Aujourd\'hui</span>':""}</b>
       ${guardBtn(date,m.g)}</div>
       ${m.list.map(x=>`<div class="dayline cat-${x.cat}"><span class="k">${x.cat==="C"?(x.k.startsWith("CM")?"Coll. matin":"Coll. aprèm"):CAT[x.cat].n}</span><span><button class="link" data-dsw="${iso(m.date)}|${prefOf(x.k)}|${x.cat}|${x.r}" ${skipOf(iso(m.date),x.k)?'style="text-decoration:line-through"':""}>${esc(R[x.r].n)} ▾</button>${S.dp&&S.dp[iso(m.date)]&&S.dp[iso(m.date)][prefOf(x.k)]?` <span class="small muted">· ton choix</span>`:""}${(()=>{ const dk=iso(m.date), sk=skipOf(dk,x.k), sp=spareFor(dk,x.k);
         return sp?` <span class="small muted">· boîte en plus : ${esc(R[sp.r].n)}</span><button class="mini" data-spundo="${sp.id}">Annuler</button>`:sk?` <span class="small muted">· pas mangé (${esc((WHY[sk.why]||"").toLowerCase())})</span><button class="mini" data-unskip="${dk}|${x.k}">Annuler</button>`:`<button class="mini" data-skip="${dk}|${x.k}" aria-label="Pas mangé : ${esc(R[x.r].n)}">Pas mangé</button>`; })()}${(x.cat==="L"||x.cat==="D")?` <span class="small muted">· ${portionTxt(m,x)}</span>`:""}${x.sub?` <span class="small muted">· remplacée (${esc(x.sub.why)})</span>`:x.miss&&x.miss.length?` <span class="small muted">· pas au placard : ${esc(ingNames(x.miss))}</span>`:""}</span></div>`).join("")}
     </div>`;
-    if(ses.s2 && iso(ses.s2)===iso(date)) html+=sessBlock(sessionKey(ws,2));
   }
   html+=`</div><div class="card" style="margin-top:16px"><div class="spread"><div><b>Début du programme</b><p class="small muted">La rotation des 4 menus part de ce jour, et chaque semaine commence ce jour-là.</p></div><input type="date" id="startDate" value="${S.start}"></div></div>`;
   return html;
@@ -1304,16 +1313,25 @@ function renderWeek(){
 
 /* ---------- Courses v11 : tu coches ce que tu as, pas de calcul de stock ---------- */
 // tout ce que demandent les repas de la semaine (sauf ceux pas mangés et pas cuisinés)
-function weekNeeds(ws){
+// les jours de tes courses : du … au … (par défaut, de demain à dans 7 jours)
+function tripNow(){
+  const T=S.trip; if(T&&T.to>=iso(TODAY)) return T;
+  return {from:iso(addDays(TODAY,1)),to:iso(addDays(TODAY,7))};
+}
+const tripKey = T => T.from+"|"+T.to;
+const tripDays = T => { const a=[]; for(let d=parse(T.from); d<=parse(T.to); d=addDays(d,1)) a.push(d); return a; };
+function weekNeeds(T){
   const need={};
-  for(let i=0;i<7;i++){ const day=addDays(ws,i); if(day<startDate()) continue; mealsFor(day).list.forEach(x=>{ if(notCooked(iso(day),x.k)) return; Object.entries(R[x.r].i).forEach(([id,q])=>need[id]=(need[id]||0)+q); }); }
+  tripDays(T).forEach(day=>{ if(day<startDate()) return; mealsFor(day).list.forEach(x=>{ if(notCooked(iso(day),x.k)) return; Object.entries(R[x.r].i).forEach(([id,q])=>need[id]=(need[id]||0)+q); }); });
   return need;
 }
-// j'en ai déjà ? ce que tu as coché ; sinon, pour les produits qui durent (riz, huile, miel…), oui si tu les as eus ces dernières semaines
-function hasIt(ws,id){
-  const H=S.have&&S.have[iso(ws)]; if(H&&id in H) return !!H[id];
+// j'en ai déjà ? ce que tu as coché ; sinon, pour les produits qui durent (riz, huile, miel…), oui si tu les avais aux dernières courses
+function hasIt(T,id){
+  const H=S.have&&S.have[tripKey(T)]; if(H&&id in H) return !!H[id];
   if(!ING[id][4]) return false;
-  for(let i=1;i<=4;i++){ const P=S.have&&S.have[iso(addDays(ws,-7*i))]; if(P&&id in P) return true; }
+  const lim=iso(addDays(parse(T.from),-35));
+  const prev=Object.keys(S.have||{}).filter(k=>{ const f=k.split("|")[0]; return f<T.from&&f>=lim&&id in S.have[k]; }).sort();
+  if(prev.length) return !!S.have[prev[prev.length-1]][id];
   return OWNED.includes(id);
 }
 // unité du compteur « J'en ai » : pièces (bananes, œufs…) ou paquets (riz, skyr, poulet…)
@@ -1324,28 +1342,42 @@ function cntUnit(id){
   const a=fmts(id).reduce((m,x)=>x.s<m.s?x:m);
   return {size:a.s,t:n=>n+" × "+a.l};
 }
-const cntOf = (ws,id) => { const C=S.cnt&&S.cnt[iso(ws)]; return C&&id in C ? C[id] : null; };
-function shopList(ws){
-  return Object.entries(weekNeeds(ws)).map(([id,q])=>{
-    const n=cntOf(ws,id), u=cntUnit(id);
+const cntOf = (T,id) => { const C=S.cnt&&S.cnt[tripKey(T)]; return C&&id in C ? C[id] : null; };
+function shopList(T){
+  return Object.entries(weekNeeds(T)).map(([id,q])=>{
+    const n=cntOf(T,id), u=cntUnit(id);
     let have, rest=q;
     if(n!==null){ rest=Math.max(0,q-n*u.size); have=rest<=1e-9; }
-    else have=hasIt(ws,id);
+    else have=hasIt(T,id);
     const p=packs(id,have?q:rest);
     return {id,name:ING[id][0],aisle:ING[id][1],q,need:fmts(id)[0].pw?u.t(Math.ceil(q/u.size-1e-9)):fq(id,q),label:p.label,price:p.price,have,keep:!!ING[id][4],n,u,part:n!==null&&n>0&&!have};
   });
 }
 function renderShop(){
-  const ws=view.week, key=iso(ws), list=shopList(ws), buy=list.filter(x=>!x.have), have=list.filter(x=>x.have);
-  const total=buy.reduce((a,x)=>a+x.price,0);
-  let html=header("Liste de courses",`Tout ce qu'il faut pour tes repas du ${fmt(ws)} au ${fmt(addDays(ws,6))} (onglet Semaine). Avec « − + », dis combien tu en as déjà : l'appli n'achète que ce qui manque.`);
-  html+=`<div class="weeknav"><button class="btn sm" data-wk="-1">‹ Préc.</button><div class="mid"><b>Semaine du ${fmt(ws)}</b><div class="small muted">${(()=>{ const d=sessionsFor(ws).drive; return d?"Drive "+fmtLong(d):""; })()}</div></div><button class="btn sm" data-wk="1">Suiv. ›</button></div>`;
+  const T=tripNow(), days=tripDays(T), list=shopList(T), buy=list.filter(x=>!x.have), have=list.filter(x=>x.have);
+  const total=buy.reduce((a,x)=>a+x.price,0), nd=days.length;
+  let html=header("Mes courses",`1. Choisis les jours. 2. Vérifie ce que tu veux manger. 3. Dis ce que tu as déjà : il ne reste que ce qu'il faut acheter.`);
+  // 1. les jours
+  const off=view.tripOff||0, d0=addDays(TODAY,off*14);
+  html+=`<div class="card"><div class="spread"><b>1. Pour quels jours ?</b><span class="row" style="gap:4px"><button class="btn sm ghost" data-tripoff="-1" ${off<=0?"disabled":""} aria-label="Jours précédents">‹</button><button class="btn sm ghost" data-tripoff="1" aria-label="Jours suivants">›</button></span></div>
+    <p class="small muted" style="margin:4px 0 8px">${view.tripWait?"Touche maintenant le <b>dernier jour</b>.":"Touche le premier jour, puis le dernier."}</p>
+    <div class="trip">${Array.from({length:14},(_,i)=>addDays(d0,i)).map(d=>{ const k=iso(d), inR=k>=T.from&&k<=T.to, end=k===T.from||k===T.to;
+      return `<button data-trip="${k}" class="${end?"end":inR?"in":""}" aria-pressed="${inR}">${DAYS[(d.getDay()+6)%7].slice(0,3).toLowerCase()}<span>${d.getDate()}</span></button>`; }).join("")}</div>
+    <p style="margin-top:10px"><b>Courses pour ${nd} jour${nd>1?"s":""}</b> : du ${fmtLong(parse(T.from))} au ${fmtLong(parse(T.to))}</p></div>`;
+  // 2. les repas de ces jours
+  const lab=x=>x.cat==="C"?(x.k.startsWith("CM")?"Coll. matin":"Coll. aprèm"):CAT[x.cat].n;
+  html+=`<details class="tk" style="margin-top:12px" ${view.tripMeals===false?"":"open"} id="tripMeals"><summary><b>2. Ce que je mange</b><span class="small muted">touche un repas pour le changer</span></summary><div class="in">
+    ${days.filter(d=>d>=startDate()).map(d=>{ const m=mealsFor(d), dk=iso(d);
+      return `<div class="mday"><b>${DAYS[(d.getDay()+6)%7]} ${fmt(d)}</b>${m.g?` <span class="chip guard">${esc(GT[m.g]?GT[m.g].s:"Garde")}</span>`:""}
+        ${m.list.map(x=>{ const sk=skipOf(dk,x.k); return `<div class="ml"><span class="k">${lab(x)}</span><span>${sk?`<s class="muted">${esc(R[x.r].n)}</s> <span class="small muted">pas mangé</span>`:`<button class="link" data-dsw="${dk}|${prefOf(x.k)}|${x.cat}|${x.r}">${esc(R[x.r].n)} ▾</button>${S.dp&&S.dp[dk]&&S.dp[dk][prefOf(x.k)]?` <span class="small muted">· ton choix</span>`:""}`}</span></div>`; }).join("")}</div>`; }).join("")}
+  </div></details>`;
+  html+=`<h2 style="margin:18px 0 8px">3. Ma liste</h2>`;
   html+=`<div class="shopsum"><div class="card"><span class="eyebrow">À acheter</span><div class="big num">≈ ${Math.round(total)} €</div><span class="small muted">${buy.length} article${buy.length>1?"s":""}</span></div>
     <div class="card"><span class="eyebrow">Déjà chez moi</span><div class="big num">${have.length}</div><span class="small muted">article${have.length>1?"s":""} coché${have.length>1?"s":""}</span></div></div>`;
   html+=`<div class="row" style="margin:12px 0"><button class="btn primary sm" id="copyList">Copier la liste</button><span class="small muted" id="copyMsg"></span></div>`;
   const row=(x,on)=>{ const n=x.n||0;
     return `<div class="item ${on?"done":""}" style="display:block"><div class="spread"><span><span class="q">${esc(x.name)}</span>${on?"":` · à acheter : <b>${esc(x.label)}</b>`}</span><span class="price num">${on?"":"≈ "+euro(x.price)}</span></div>
-    <span class="small muted">Pour la semaine : ${esc(x.need)}</span>
+    <span class="small muted">Pour ces ${nd} jours : ${esc(x.need)}</span>
     <div class="row" style="margin-top:6px;align-items:center;gap:6px"><span class="small">J'en ai :</span>
       <button class="btn sm" data-cnt="${x.id}|-1" ${n<=0?"disabled":""} aria-label="Un de moins">−</button><b class="num" style="min-width:5.5em;text-align:center">${x.n===null&&on?"assez":esc(x.u.t(n))}</b><button class="btn sm" data-cnt="${x.id}|1" aria-label="Un de plus">+</button>
       ${on?`<button class="btn sm ghost" data-have="${x.id}">Plus rien</button>`:`<button class="btn sm ghost" data-have="${x.id}">J'ai tout</button>`}</div></div>`; };
@@ -1963,7 +1995,13 @@ document.addEventListener("click",async e=>{
   if(t.dataset.paint){ view.paint=t.dataset.paint; render(); return; }
   if(t.dataset.mo){ view.month=new Date(view.month.getFullYear(),view.month.getMonth()+(+t.dataset.mo),1); render(); return; }
   if(t.dataset.day){ const k=t.dataset.day, p=view.paint; if(p==="X"||gType(parse(k))===p) delete S.guards[k]; else S.guards[k]=p; save(); render(); return; }
+  if(t.dataset.wk && view.tab==="week"){ const v=+t.dataset.wk; view.ds=v===0?null:addDays(view.ds||TODAY,7*v); render(); return; }
   if(t.dataset.wk){ view.week=addDays(view.week,7*(+t.dataset.wk)); render(); return; }
+  if(t.dataset.tripoff){ view.tripOff=Math.max(0,(view.tripOff||0)+(+t.dataset.tripoff)); render(); return; }
+  if(t.dataset.trip){ const k=t.dataset.trip, T=tripNow();
+    if(view.tripWait&&k>=T.from){ S.trip={from:T.from,to:k}; view.tripWait=false; }
+    else { S.trip={from:k,to:k}; view.tripWait=true; }
+    save(); render(); return; }
   if(t.dataset.swap){ const [w,k,c,r,wsI]=t.dataset.swap.split("|"); openSwap(+w,k,c,r,wsI); return; }
   if(t.dataset.pick){ const [w,k,id,keep,wsI]=t.dataset.pick.split("|"); const P=wsI&&S.picks&&S.picks[wsI];
     if(P){ if(id==="__reset") delete P[k]; else P[k]=id; }
@@ -1976,9 +2014,9 @@ document.addEventListener("click",async e=>{
   if(t.dataset.dswpick){ dswApply(t.dataset.dswpick); return; }
   if(t.dataset.sdone){ const k=t.dataset.sdone; S.done=S.done||{}; if(sessionDone(k)){ S.done[k]=0; delete S.cook[k]; } else S.done[k]=1; save(); render(); return; }
   if(t.dataset.snot){ S.done=S.done||{}; S.done[t.dataset.snot]=0; save(); render(); return; }
-  if(t.dataset.have){ const k=iso(view.week), H=S.have[k]=S.have[k]||{}, id=t.dataset.have, x=shopList(view.week).find(y=>y.id===id); H[id]=x&&x.have?0:1; if(S.cnt&&S.cnt[k]) delete S.cnt[k][id]; save(); render(); return; }
-  if(t.dataset.cnt){ const [id,dv]=t.dataset.cnt.split("|"), k=iso(view.week); S.cnt=S.cnt||{}; const C=S.cnt[k]=S.cnt[k]||{};
-    let n=cntOf(view.week,id); if(n===null) n=0; n=Math.max(0,n+(+dv)); C[id]=n; if(S.have[k]) delete S.have[k][id]; save(); render(); return; }
+  if(t.dataset.have){ const T=tripNow(), k=tripKey(T), H=S.have[k]=S.have[k]||{}, id=t.dataset.have, x=shopList(T).find(y=>y.id===id); H[id]=x&&x.have?0:1; if(S.cnt&&S.cnt[k]) delete S.cnt[k][id]; save(); render(); return; }
+  if(t.dataset.cnt){ const [id,dv]=t.dataset.cnt.split("|"), T=tripNow(), k=tripKey(T); S.cnt=S.cnt||{}; const C=S.cnt[k]=S.cnt[k]||{};
+    let n=cntOf(T,id); if(n===null) n=0; n=Math.max(0,n+(+dv)); C[id]=n; if(S.have[k]) delete S.have[k][id]; save(); render(); return; }
   if(t.dataset.ghgo){ const v=(document.getElementById("ghTok").value||"").trim(), m=document.getElementById("ghMsg");
     if(!/^(ghp_|github_pat_)/.test(v)){ m.textContent="Colle la clé GitHub en entier (elle commence par ghp_)."; return; }
     m.textContent="Connexion…"; t.disabled=true; view.dataOpen=1;
@@ -2028,9 +2066,9 @@ document.addEventListener("click",async e=>{
   if(t.id==="hideDone"){ view.hideDone=!view.hideDone; render(); return; }
   if(t.id==="resetShop"){ delete S.shop[iso(view.week)]; save(); render(); return; }
   if(t.id==="copyList"){
-    const list=shopList(view.week).filter(x=>!x.have);
+    const T=tripNow(), list=shopList(T).filter(x=>!x.have);
     const groups={}; list.forEach(x=>(groups[x.aisle]=groups[x.aisle]||[]).push(x));
-    let txt="Courses semaine du "+fmt(view.week)+"\n";
+    let txt="Courses du "+fmtLong(parse(T.from))+" au "+fmtLong(parse(T.to))+"\n";
     Object.keys(AISLES).forEach(g=>{ if(!groups[g])return; txt+="\n"+AISLES[g]+"\n"; groups[g].forEach(x=>{ txt+="- "+x.name+" : "+x.label+"\n"; }); });
     try{ await navigator.clipboard.writeText(txt); $("#copyMsg").textContent="Liste copiée"; }
     catch(_){ $("#copyMsg").textContent="Copie impossible ici : sélectionne la liste à la main"; }
