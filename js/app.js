@@ -302,7 +302,7 @@ const A = {
   skip: v => { skip(mealAt(v),"autre"); closeSheet(); after(); },
   eatall: v => { mealsFor(parse(v)).list.forEach(x=>{ if(!isEaten(x.k)&&!isSkip(x.k)) eat(x); }); toast("Journée cochée ✓"); after(); },
   swap: v => openSheet("swap",v),
-  swapgo: v => { const [k,r]=v.split("|"), [d,p]=k.split("|"), D=S.dp[d]=S.dp[d]||{}; if(r) D[p]=r; else delete D[p]; if(!Object.keys(D).length) delete S.dp[d]; openSheet("meal",k); after(); },
+  swapgo: v => { const i=v.lastIndexOf("|"), k=v.slice(0,i), r=v.slice(i+1), [d,p]=k.split("|"), D=S.dp[d]=S.dp[d]||{}; if(r) D[p]=r; else delete D[p]; if(!Object.keys(D).length) delete S.dp[d]; openSheet("meal",k); after(); },
   gardes: () => openSheet("gardes"),
   settings: () => openSheet("settings"),
   guard: v => { const t=nextType(gType(parse(v))); if(t) S.guards[v]=t; else delete S.guards[v]; after(); },
