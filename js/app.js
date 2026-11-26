@@ -262,8 +262,21 @@ function sSettings(){
 
 /* ---------- Fenêtres du bas ---------- */
 const SHEETS = {got:sGot,session:sSession,finish:sFinish,day:a=>sDay(...a.split("~")),meal:sMeal,swap:sSwap,rec:r=>recBody(r),gardes:sGardes,settings:sSettings};
-function openSheet(kind,arg){ view.sheet={kind,arg}; renderSheet(true); }
-function closeSheet(){ view.sheet=null; view.got=null; view.used=null; const sh=$("#sheet"); sh.classList.remove("on"); setTimeout(()=>{ if(!view.sheet) sh.innerHTML=""; },250); }
+// le bouton « retour » du téléphone ferme la fiche au lieu de quitter l'appli
+function openSheet(kind,arg){ if(!view.sheet){ try{ history.pushState({sheet:1},""); }catch(e){} } view.sheet={kind,arg}; renderSheet(true); }
+function closeSheet(fromBack){
+  if(!view.sheet) return;
+  view.sheet=null; view.got=null; view.used=null; const sh=$("#sheet"), pn=sh.querySelector(".panel");
+  if(pn) pn.style.transform=""; sh.classList.remove("on"); setTimeout(()=>{ if(!view.sheet) sh.innerHTML=""; },250);
+  if(!fromBack&&history.state&&history.state.sheet){ try{ history.back(); }catch(e){} }
+}
+window.addEventListener("popstate",()=>{ if(view.sheet) closeSheet(true); });
+// glisser la fiche vers le bas pour la fermer
+let drag=null;
+document.addEventListener("touchstart",e=>{ const pn=e.target.closest("#sheet .panel"); if(!pn) return; const b=pn.querySelector(".sbody");
+  if(e.target.closest(".grab")||b.scrollTop<=0) drag={y:e.touches[0].clientY,dy:0,pn}; },{passive:true});
+document.addEventListener("touchmove",e=>{ if(!drag) return; drag.dy=Math.max(0,e.touches[0].clientY-drag.y); if(drag.dy>0){ drag.pn.style.transition="none"; drag.pn.style.transform="translateY("+drag.dy+"px)"; } },{passive:true});
+document.addEventListener("touchend",()=>{ if(!drag) return; const d=drag; drag=null; d.pn.style.transition=""; if(d.dy>90) closeSheet(); else d.pn.style.transform=""; });
 function renderSheet(fresh){
   const sh=$("#sheet"); if(!view.sheet){ return; }
   const body=sh.querySelector(".sbody"), top=body&&!fresh?body.scrollTop:0;
@@ -291,7 +304,7 @@ const after = () => { save(); render(); };
 /* ---------- Actions ---------- */
 function ensureTrip(){ if(!S.trip||S.trip.to<iso(TODAY)) S.trip=Object.assign(tripNow(),{chk:{}}); S.trip.chk=S.trip.chk||{}; return S.trip; }
 const A = {
-  close: closeSheet,
+  close: () => closeSheet(),
   tab: v => { view.tab=v; view.day=null; closeSheet(); try{ localStorage.setItem("plan-tab",v); }catch(e){} render(); scrollTo(0,0); },
   day: v => { view.day=v===iso(TODAY)?null:v; render(); },
   openday: v => { view.day=v; view.tab="manger"; render(); scrollTo(0,0); },
