@@ -263,24 +263,40 @@ function sSettings(){
 /* ---------- Fenêtres du bas ---------- */
 const SHEETS = {got:sGot,session:sSession,finish:sFinish,day:a=>sDay(...a.split("~")),meal:sMeal,swap:sSwap,rec:r=>recBody(r),gardes:sGardes,settings:sSettings};
 // le bouton « retour » du téléphone ferme la fiche au lieu de quitter l'appli
-function openSheet(kind,arg){ if(!view.sheet){ try{ history.pushState({sheet:1},""); }catch(e){} } view.sheet={kind,arg}; renderSheet(true); }
+let lockY=0;
+function lockPage(on){ const b=document.body;
+  if(on&&!b.classList.contains("lock")){ lockY=window.scrollY||0; b.style.top=-lockY+"px"; b.classList.add("lock"); }
+  if(!on&&b.classList.contains("lock")){ b.classList.remove("lock"); b.style.top=""; window.scrollTo(0,lockY); } }
+function openSheet(kind,arg){ if(!view.sheet){ try{ history.pushState({sheet:1},""); }catch(e){} lockPage(true); } view.sheet={kind,arg}; renderSheet(true); }
 function closeSheet(fromBack){
   if(!view.sheet) return;
   view.sheet=null; view.got=null; view.used=null; const sh=$("#sheet"), pn=sh.querySelector(".panel");
-  if(pn) pn.style.transform=""; sh.classList.remove("on"); setTimeout(()=>{ if(!view.sheet) sh.innerHTML=""; },250);
+  if(pn) pn.style.transform=""; sh.classList.remove("on"); lockPage(false); setTimeout(()=>{ if(!view.sheet) sh.innerHTML=""; },250);
   if(!fromBack&&history.state&&history.state.sheet){ try{ history.back(); }catch(e){} }
 }
 window.addEventListener("popstate",()=>{ if(view.sheet) closeSheet(true); });
 // glisser la fiche vers le bas pour la fermer
 let drag=null;
-document.addEventListener("touchstart",e=>{ const pn=e.target.closest("#sheet .panel"); if(!pn) return; const b=pn.querySelector(".sbody");
-  if(e.target.closest(".grab")||b.scrollTop<=0) drag={y:e.touches[0].clientY,dy:0,pn}; },{passive:true});
-document.addEventListener("touchmove",e=>{ if(!drag) return; drag.dy=Math.max(0,e.touches[0].clientY-drag.y); if(drag.dy>0){ drag.pn.style.transition="none"; drag.pn.style.transform="translateY("+drag.dy+"px)"; } },{passive:true});
-document.addEventListener("touchend",()=>{ if(!drag) return; const d=drag; drag=null; d.pn.style.transition=""; if(d.dy>90) closeSheet(); else d.pn.style.transform=""; });
+document.addEventListener("touchstart",e=>{ if(!view.sheet) return; const pn=e.target.closest("#sheet .panel");
+  if(!pn){ drag=e.target.closest("#sheet")?{scrim:1}:null; return; }
+  const b=pn.querySelector(".sbody"), head=!!e.target.closest(".shead");
+  drag={y:e.touches[0].clientY,dy:0,pn,b,head,mode:null}; },{passive:true});
+document.addEventListener("touchmove",e=>{
+  if(!drag) return;
+  if(drag.scrim){ e.preventDefault(); return; }                       // la page derrière ne bouge pas
+  const dy=e.touches[0].clientY-drag.y;
+  if(!drag.mode){ if(Math.abs(dy)<6) return; drag.mode = dy>0 && (drag.head||drag.b.scrollTop<=0) ? "sheet" : "scroll"; if(drag.mode==="sheet") drag.y=e.touches[0].clientY; }
+  if(drag.mode!=="sheet") return;
+  e.preventDefault();
+  drag.dy=Math.max(0,e.touches[0].clientY-drag.y);
+  drag.pn.style.transition="none"; drag.pn.style.transform="translateY("+drag.dy+"px)";
+},{passive:false});
+const dragEnd=()=>{ if(!drag) return; const d=drag; drag=null; if(d.mode!=="sheet") return; d.pn.style.transition=""; if(d.dy>80) closeSheet(); else d.pn.style.transform=""; };
+document.addEventListener("touchend",dragEnd); document.addEventListener("touchcancel",dragEnd);
 function renderSheet(fresh){
   const sh=$("#sheet"); if(!view.sheet){ return; }
   const body=sh.querySelector(".sbody"), top=body&&!fresh?body.scrollTop:0;
-  sh.innerHTML=`<div class="scrim" data-a="close"></div><div class="panel" role="dialog"><div class="grab" data-a="close"><i></i></div><button class="x" data-a="close" aria-label="Fermer">✕</button><div class="sbody">${SHEETS[view.sheet.kind](view.sheet.arg)}</div></div>`;
+  sh.innerHTML=`<div class="scrim" data-a="close"></div><div class="panel" role="dialog"><div class="shead"><div class="grab"><i></i></div><button class="x" data-a="close" aria-label="Fermer">✕</button></div><div class="sbody">${SHEETS[view.sheet.kind](view.sheet.arg)}</div></div>`;
   sh.querySelector(".sbody").scrollTop=top;
   requestAnimationFrame(()=>sh.classList.add("on"));
 }
